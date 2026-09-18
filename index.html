@@ -122,6 +122,25 @@
   @media(max-width:760px){.dashboard-grid{grid-template-columns:repeat(2,1fr);}.home-quick{grid-template-columns:1fr;}}
   @media(max-width:480px){.dashboard-grid{grid-template-columns:1fr;}}
 
+  /* Self-service availability (home page, players) */
+  .self-avail-card{
+    margin-top:12px;
+    background:linear-gradient(145deg,rgba(37,211,102,0.14),rgba(37,211,102,0.04));
+    border:1px solid rgba(37,211,102,0.35);border-radius:var(--radius);padding:16px;
+  }
+  .self-avail-card .sac-head{display:flex;align-items:center;gap:14px;}
+  .self-avail-card .sac-icon{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:#25D366;color:var(--pitch-deep);display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .self-avail-card .sac-info{flex:1;min-width:0;}
+  .self-avail-card .sac-label{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--chalk);}
+  .self-avail-card .sac-desc{font-size:12px;color:var(--chalk-dim);margin-top:3px;line-height:1.4;}
+  .self-avail-actions{display:flex;gap:8px;margin-top:12px;}
+  .avail-quick-btn{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--chalk);border-radius:8px;padding:10px 8px;font:700 12px 'Inter',sans-serif;cursor:pointer;transition:background .15s,border-color .15s;}
+  .avail-quick-btn:disabled{opacity:.55;cursor:default;}
+  .avail-quick-btn.yes.active{background:#25D366;border-color:#25D366;color:#0b1f14;}
+  .avail-quick-btn.no.active{background:var(--ball);border-color:var(--ball);color:var(--chalk);}
+  .avail-quick-btn.pending.active{background:var(--gold);border-color:var(--gold);color:var(--pitch-deep);}
+  @media(max-width:480px){.self-avail-actions{flex-direction:column;}}
+
   /* Season summary export */
   .season-summary-card{
     margin-top:12px;display:flex;align-items:center;gap:14px;
@@ -493,6 +512,22 @@
 
   <section class="home-dashboard" data-page="home" aria-label="Club overview">
     <div class="sec-head"><h2>Club Overview</h2><span class="n">Live club summary</span></div>
+
+    <div class="self-avail-card" id="selfAvailCard" style="display:none;">
+      <div class="sac-head">
+        <div class="sac-icon">✅</div>
+        <div class="sac-info">
+          <div class="sac-label">Your Availability</div>
+          <div class="sac-desc" id="selfAvailDesc">—</div>
+        </div>
+      </div>
+      <div class="self-avail-actions" id="selfAvailActions">
+        <button type="button" class="avail-quick-btn yes" data-v="yes" disabled>Yes, I'm in</button>
+        <button type="button" class="avail-quick-btn no" data-v="no" disabled>Can't make it</button>
+        <button type="button" class="avail-quick-btn pending" data-v="pending" disabled>Not sure yet</button>
+      </div>
+    </div>
+
     <div class="dashboard-grid">
       <a class="dash-card next" href="fixtures.html">
         <div class="dash-icon">🏏</div>
@@ -1294,6 +1329,7 @@
       nextValue.textContent='No fixture yet';
       nextMeta.textContent='Add fixtures from the Fixtures page';
     }
+    updateSelfAvailCard(next);
     let expenses=0;
     Object.values(state.expenses).forEach(items=>{ if(Array.isArray(items)) items.forEach(i=>expenses+=Number(i.amount||0)); });
     let expected=0, received=0;
@@ -1306,6 +1342,48 @@
     $('homeBalanceLabel').textContent=balance>=0?'Available Balance':'Funding Shortfall';
     $('homeBalanceMeta').textContent=balance>=0?'Contributions received minus expenses':`${fmtMoney(Math.abs(balance))} more needed to cover expenses`;
   }
+
+  async function updateSelfAvailCard(next){
+    const card = $('selfAvailCard');
+    if(!card) return;
+    if(!isPlayer || !currentPlayerContact || !next){
+      card.style.display = 'none';
+      return;
+    }
+    const d = new Date(next.date+'T00:00:00');
+    $('selfAvailDesc').textContent = `vs ${next.opponent || 'TBD'} · ${d.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})}${next.time ? ' · '+next.time : ''}`;
+    card.style.display = 'block';
+    const key = matchKey(next);
+    const rec = await fetchAvailability(key);
+    if(!isPlayer || !currentPlayerContact) return;
+    const status = rec[currentPlayerContact.name] || 'pending';
+    document.querySelectorAll('#selfAvailActions .avail-quick-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.v === status);
+      btn.disabled = false;
+    });
+  }
+  document.querySelectorAll('#selfAvailActions .avail-quick-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!isPlayer || !currentPlayerContact) return;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const upcoming = state.matches
+        .filter(m => { const d=new Date(m.date+'T00:00:00'); return !isNaN(d) && d >= today; })
+        .sort((a,b)=>a.date.localeCompare(b.date));
+      const next = upcoming[0];
+      if(!next) return;
+      const actionBtns = document.querySelectorAll('#selfAvailActions .avail-quick-btn');
+      actionBtns.forEach(b=>b.disabled=true);
+      try{
+        await submitAvailability(matchKey(next), currentPlayerContact.name, currentUser.email || '', btn.dataset.v);
+      }catch(e){
+        setAuthStatus('Could not save availability: ' + (e.message || 'please try again'), 'err');
+      }
+      await updateSelfAvailCard(next);
+      if(activeMatch && matchKey(activeMatch) === matchKey(next)){
+        renderAvailRoster(activeMatch);
+      }
+    });
+  });
 
   function render(){
     applyEditState();

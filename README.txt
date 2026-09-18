@@ -54,6 +54,13 @@ admin account:
      sees the match info and the availability roster there, nothing else.
      Guests still see fixtures, finances, and contributions, same as
      before — this restriction only applies to logged-in player accounts.
+  3a. Home also has a "Your Availability" card (index.html only, players
+      only) right under Club Overview, showing the next upcoming match
+      with three quick buttons (Yes, I'm in / Can't make it / Not sure
+      yet) — a shortcut so a player doesn't have to open the match's
+      full details just to mark themselves. It writes to the same
+      availability_responses table as the roster inside a match's
+      details, so marking from either place stays in sync.
      Note this is
      a UI-level restriction, not a data-level one: because finances and
      contributions are read publicly (same as fixtures) so guests can
