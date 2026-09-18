@@ -45,9 +45,16 @@ admin account:
      Contributions nav links and the Home page's financial cards
      (expenses, contributions received, balance, Season Summary PDF) are
      hidden from players, and typing the finances.html/contributions.html
-     URL directly redirects them back to Fixtures. Guests still see
-     fixtures, finances, and contributions, same as before — this
-     restriction only applies to logged-in player accounts. Note this is
+     URL directly redirects them back to Fixtures. Within a match's own
+     detail popup, the "To your team" reminder section (which lists every
+     player's phone number as a WhatsApp send button), "To opponent
+     captain", and "Expenses for this match" are also hidden from
+     players — those are admin actions (sending reminders, entering
+     expenses) and expose other players' contact info, so a player only
+     sees the match info and the availability roster there, nothing else.
+     Guests still see fixtures, finances, and contributions, same as
+     before — this restriction only applies to logged-in player accounts.
+     Note this is
      a UI-level restriction, not a data-level one: because finances and
      contributions are read publicly (same as fixtures) so guests can
      view them, the underlying numbers are still fetched into the page's

@@ -354,7 +354,10 @@
   body.player .dash-card.balance,
   body.player .season-summary-card,
   body.player .home-quick a[href="finances.html"],
-  body.player .home-quick a[href="contributions.html"]{display:none !important;}
+  body.player .home-quick a[href="contributions.html"],
+  body.player #teamMsgSection,
+  body.player #captainMsgSection,
+  body.player #matchExpenseSection{display:none !important;}
 </style>
 </head>
 <body data-site-page="contributions">
@@ -564,7 +567,7 @@
     <div class="row"><span>Venue</span><span id="mVenue"></span></div>
     <div class="row"><span>Ground / Location</span><span id="mLoc"></span></div>
 
-    <div class="msg-section">
+    <div class="msg-section" id="teamMsgSection">
       <div class="msg-label">🏏 To your team</div>
       <textarea class="msg-box editable" id="mTeamMsg"></textarea>
       <div class="btnrow">
@@ -610,7 +613,7 @@
       <div class="avail-roster" id="availRoster"></div>
     </div>
 
-    <div class="msg-section">
+    <div class="msg-section" id="captainMsgSection">
       <div class="msg-label">🤝 To opponent captain</div>
       <div class="add-contact" style="margin-top:0;margin-bottom:8px;">
         <input class="name" id="captainName" placeholder="Captain name (optional)">
@@ -624,7 +627,7 @@
       <div class="hint" id="captainSavedHint" style="margin-top:8px;"></div>
     </div>
 
-    <div class="msg-section">
+    <div class="msg-section" id="matchExpenseSection">
       <div class="msg-label">💰 Expenses for this match</div>
       <div id="expenseItems"></div>
       <div class="add-contact expense-add-row" style="margin-top:8px;">
