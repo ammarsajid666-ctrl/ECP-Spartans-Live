@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECP Spartans — Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --pitch:#173226;
+    --pitch-deep:#0f2019;
+    --chalk:#F1EEE2;
+    --chalk-dim:#c9c4b2;
+    --willow:#B08968;
+    --ball:#A6291D;
+    --ball-bright:#D1401F;
+    --off:#3E5347;
+    --gold:#C9A227;
+    --line:rgba(241,238,226,0.14);
+    --radius:10px;
+    font-family:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  body{
+    margin:0;
+    background:var(--pitch);
+    color:var(--chalk);
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 50% -10%, rgba(201,162,39,0.10), transparent 55%),
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 40px, transparent 40px, transparent 80px);
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:18px 16px 60px;}
+
+  /* Header */
+  header{padding:6px 2px 18px;border-bottom:1px solid var(--line);margin-bottom:18px;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;}
+  h1{font-family:'Oswald',sans-serif;font-size:30px;font-weight:700;margin:4px 0 2px;letter-spacing:0.01em;}
+  .sub{color:var(--chalk-dim);font-size:13.5px;line-height:1.4;}
+  .page-nav{display:flex;gap:7px;overflow-x:auto;padding:2px 0 14px;margin-bottom:2px;}
+  .page-tab{flex:0 0 auto;border:1px solid var(--line);background:rgba(255,255,255,0.03);color:var(--chalk-dim);border-radius:999px;padding:8px 12px;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.03em;cursor:pointer;}
+  .page-tab.active{background:var(--gold);border-color:var(--gold);color:var(--pitch-deep);}
+  .hero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);min-height:285px;display:flex;align-items:flex-end;margin:4px 0 18px;background:var(--pitch-deep);}
+  .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.82;}
+  .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(8,24,16,.9),rgba(8,24,16,.04) 75%);}
+  .hero-copy{position:relative;z-index:1;padding:21px 18px;}
+  .hero-copy .kicker{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--gold);text-transform:uppercase;}
+  .hero-copy h2{font:700 36px/1 'Oswald',sans-serif;margin:6px 0;letter-spacing:.02em;}
+  .hero-copy p{margin:0;color:var(--chalk-dim);font-size:13px;}
+
+  /* Upload */
+  .upload-box{
+    margin-top:16px;border:1.5px dashed var(--line);border-radius:var(--radius);
+    padding:16px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.02);
+  }
+  .upload-box .ic{
+    width:38px;height:38px;flex:0 0 auto;border-radius:50%;background:var(--ball);
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    box-shadow:0 0 0 3px rgba(166,41,29,0.18);
+  }
+  .upload-box .txt{flex:1;font-size:13px;color:var(--chalk-dim);}
+  .upload-box .txt b{color:var(--chalk);display:block;font-size:14px;margin-bottom:2px;font-weight:600;}
+  .file-btn{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:0.05em;
+    background:var(--gold);color:var(--pitch-deep);border:none;border-radius:6px;
+    padding:8px 12px;font-weight:700;cursor:pointer;white-space:nowrap;
+  }
+  input[type=file]{display:none;}
+  .parse-status{font-size:12px;margin-top:8px;color:var(--chalk-dim);min-height:16px;}
+  .parse-status.err{color:#ef8577;}
+  .parse-status.ok{color:#8fd19e;}
+
+  /* Section headers */
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:26px 0 10px;}
+  .sec-head h2{font-family:'Oswald',sans-serif;font-size:16px;letter-spacing:0.04em;text-transform:uppercase;margin:0;font-weight:600;color:var(--chalk);}
+  .sec-head .n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--chalk-dim);}
+
+  /* Calendar */
+  .cal-card{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:var(--radius);padding:14px;}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-nav button{background:none;border:1px solid var(--line);color:var(--chalk);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:15px;}
+  .cal-nav .m{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.03em;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--chalk-dim);padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1/1;border-radius:7px;position:relative;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;font-size:12px;background:rgba(255,255,255,0.02);
+    border:1px solid transparent;cursor:default;
+  }
+  .cal-cell.blank{background:none;}
+  .cal-cell .d{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;}
+  .cal-cell.weekend{background:rgba(255,255,255,0.045);}
+  .cal-cell.off .d{color:var(--chalk-dim);}
+  .cal-cell.off::after{content:'';width:3px;height:3px;border-radius:50%;background:var(--off);margin-top:3px;}
+  .cal-cell.match{background:rgba(166,41,29,0.22);border-color:rgba(166,41,29,0.55);cursor:pointer;}
+  .cal-cell.match .d{color:var(--chalk);}
+  .cal-cell.match .tag{font-size:8.5px;color:var(--chalk);opacity:0.85;margin-top:1px;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+  .cal-cell.today{box-shadow:0 0 0 1.5px var(--gold) inset;}
+  .cal-legend{display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--chalk-dim);}
+  .cal-legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .dot.m{background:var(--ball-bright);}
+  .dot.o{background:var(--off);}
+
+  /* Home dashboard */
+  .home-dashboard{margin-top:18px;}
+  .dashboard-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .dash-card{display:block;text-decoration:none;color:inherit;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-height:142px;transition:transform .15s,border-color .15s,background .15s;}
+  .dash-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.07);}
+  .dash-icon{font-size:22px;margin-bottom:12px;}
+  .dash-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--chalk-dim);font-weight:700;}
+  .dash-value{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:800;margin-top:7px;line-height:1.2;}
+  .dash-meta{font-size:11px;color:var(--chalk-dim);margin-top:7px;line-height:1.35;}
+  .home-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;}
+  .home-quick a{padding:12px 14px;border:1px solid var(--line);border-radius:10px;text-decoration:none;color:var(--chalk);font-weight:700;font-size:12px;background:rgba(255,255,255,.025);display:flex;justify-content:space-between;}
+  .home-quick a:hover{background:rgba(255,255,255,.06);}
+  @media(max-width:760px){.dashboard-grid{grid-template-columns:repeat(2,1fr);}.home-quick{grid-template-columns:1fr;}}
+  @media(max-width:480px){.dashboard-grid{grid-template-columns:1fr;}}
+
+  /* Season summary export */
+  .season-summary-card{
+    margin-top:12px;display:flex;align-items:center;gap:14px;
+    background:linear-gradient(145deg,rgba(201,162,39,0.14),rgba(201,162,39,0.05));
+    border:1px solid rgba(201,162,39,0.35);border-radius:var(--radius);padding:16px;
+  }
+  .season-summary-card .ssc-icon{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--pitch-deep);display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .season-summary-card .ssc-info{flex:1;min-width:0;}
+  .season-summary-card .ssc-label{font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;color:var(--chalk);}
+  .season-summary-card .ssc-desc{font-size:12px;color:var(--chalk-dim);margin-top:3px;line-height:1.4;}
+  .season-summary-card .file-btn{flex:0 0 auto;}
+  .season-summary-card .file-btn:disabled{opacity:.6;cursor:default;}
+  @media(max-width:520px){.season-summary-card{flex-direction:column;align-items:stretch;text-align:center;}.season-summary-card .ssc-icon{margin:0 auto;}}
+
+  /* Empty state */
+  .empty{text-align:center;padding:30px 10px;color:var(--chalk-dim);font-size:13px;}
+
+  /* Upcoming list */
+  .match-item{
+    background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 13px;margin-bottom:9px;display:flex;gap:12px;align-items:center;
+  }
+  .match-item .dbox{
+    flex:0 0 auto;width:46px;height:46px;border-radius:8px;background:var(--ball);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .match-item .dbox .dd{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;line-height:1;}
+  .match-item .dbox .mm{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.05em;text-transform:uppercase;opacity:0.85;}
+  .match-item .info{flex:1;min-width:0;}
+  .match-item .vs{font-weight:600;font-size:14px;}
+  .match-item .meta{font-size:11.5px;color:var(--chalk-dim);margin-top:2px;}
+  .match-item .countdown{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);margin-top:3px;}
+  .match-item .actions{display:flex;flex-direction:column;gap:6px;}
+  .icon-btn{
+    background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--chalk);
+    border-radius:6px;padding:6px 9px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;
+  }
+  .icon-btn.wa{background:#25D366;border-color:#25D366;color:#0b1f14;font-weight:600;}
+  .filter-row{display:flex;gap:8px;margin-bottom:10px;}
+  .view-toggle{display:flex;gap:8px;margin-bottom:14px;}
+  .view-toggle button{flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--line);color:var(--chalk-dim);padding:7px 4px;border-radius:6px;font-size:11.5px;cursor:pointer;font-family:'Inter',sans-serif;}
+  .view-toggle button.active{background:var(--gold);color:var(--pitch-deep);border-color:var(--gold);font-weight:700;}
+  .team-group{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+  .team-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .team-group-head h3{font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;margin:0;}
+  .team-group-head span{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--chalk-dim);white-space:nowrap;}
+  .team-group-list{display:flex;flex-direction:column;gap:6px;}
+  .team-match-row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:8px 9px;border-radius:7px;background:rgba(255,255,255,0.025);cursor:pointer;}
+  .team-match-row:hover{background:rgba(255,255,255,0.06);}
+  .team-match-row.past{opacity:0.55;}
+  .team-match-row .tm-date{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--chalk);white-space:nowrap;}
+  .team-match-row .tm-meta{font-size:12px;color:var(--chalk-dim);text-align:right;}
+  .filter-row button{
+    flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--line);color:var(--chalk-dim);
+    padding:7px 4px;border-radius:6px;font-size:11.5px;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .filter-row button.active{background:var(--gold);color:var(--pitch-deep);border-color:var(--gold);font-weight:700;}
+
+  /* Team sheet */
+  .contact-row{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
+  .contact-row .who{flex:1;min-width:0;}
+  .contact-row .who b{font-size:13px;display:block;}
+  .contact-row .who span{font-size:11px;color:var(--chalk-dim);font-family:'JetBrains Mono',monospace;}
+  .contact-row .del{background:none;border:none;color:#ef8577;cursor:pointer;font-size:15px;padding:4px 6px;}
+  .add-contact{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;}
+  .add-contact input{
+    background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:6px;color:var(--chalk);
+    padding:8px 9px;font-size:12.5px;font-family:'Inter',sans-serif;
+  }
+  .add-contact input.name{flex:1.2;min-width:110px;}
+  .add-contact input.phone{flex:1;min-width:110px;}
+  .add-contact input.email{flex:1.3;min-width:150px;}
+  .add-contact button{background:var(--gold);border:none;color:var(--pitch-deep);border-radius:6px;padding:0 13px;font-weight:700;cursor:pointer;font-size:13px;}
+  .hint{font-size:11px;color:var(--chalk-dim);margin-top:6px;line-height:1.4;}
+
+  /* Modal */
+  .overlay{position:fixed;inset:0;background:rgba(6,14,10,0.72);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.show{display:flex;}
+  .sheet{
+    background:var(--pitch-deep);border:1px solid var(--line);border-top-left-radius:16px;border-top-right-radius:16px;
+    width:100%;max-width:520px;padding:20px 18px 26px;max-height:82vh;overflow-y:auto;
+  }
+  .sheet-handle{width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 16px;}
+  .sheet h3{font-family:'Oswald',sans-serif;font-size:19px;margin:0 0 4px;font-weight:600;}
+  .sheet .when{color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:14px;}
+  .sheet .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .sheet .row span:first-child{color:var(--chalk-dim);}
+  .msg-box{
+    background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:8px;padding:11px;
+    font-size:12.5px;color:var(--chalk-dim);margin:14px 0;line-height:1.5;
+  }
+  .sheet .btnrow{display:flex;gap:8px;margin-top:6px;}
+  .sheet .btnrow button{flex:1;}
+  .close-x{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--chalk-dim);font-size:18px;cursor:pointer;}
+  .send-list{margin-top:6px;}
+  .send-list .icon-btn{width:100%;margin-bottom:6px;display:flex;justify-content:space-between;}
+  .msg-section{border-top:1px solid var(--line);padding-top:14px;margin-top:14px;}
+  .msg-label{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:8px;}
+  textarea.msg-box{
+    width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:8px;padding:11px;
+    font-size:12.5px;color:var(--chalk);line-height:1.5;font-family:'Inter',sans-serif;resize:vertical;min-height:80px;margin:0;
+  }
+  textarea.msg-box:focus{outline:none;border-color:var(--gold);}
+  .avail-summary{margin-top:14px;background:rgba(201,162,39,0.12);border:1px solid rgba(201,162,39,0.35);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.5;}
+  .avail-summary b{color:var(--gold);}
+  .avail-hint{font-size:11px;color:var(--chalk-dim);margin:8px 0;line-height:1.4;}
+  .avail-roster{display:flex;flex-direction:column;gap:6px;}
+  .avail-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .avail-row .nm{flex:1;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .avail-pill{display:flex;gap:4px;}
+  .avail-pill button{
+    border:1px solid var(--line);background:rgba(255,255,255,0.04);color:var(--chalk-dim);
+    border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;
+  }
+  .avail-pill button.yes.active{background:#25D366;border-color:#25D366;color:#0b1f14;}
+  .avail-pill button.no.active{background:var(--ball);border-color:var(--ball);color:var(--chalk);}
+  .avail-pill button.pending.active{background:var(--gold);border-color:var(--gold);color:var(--pitch-deep);}
+  .poll-box{background:rgba(255,255,255,0.03);border:1px dashed var(--line);border-radius:8px;padding:12px;margin:14px 0;}
+  .poll-label{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:var(--chalk);margin-bottom:6px;font-weight:600;}
+  .poll-hint{font-size:11px;color:var(--chalk-dim);line-height:1.5;margin-bottom:10px;}
+  .poll-field-label{font-size:10.5px;color:var(--chalk-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;text-transform:uppercase;display:block;margin-bottom:4px;}
+  .poll-copy-row{display:flex;gap:7px;margin-bottom:10px;}
+  .poll-copy-row:last-child{margin-bottom:0;}
+  .poll-input{
+    flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:6px;color:var(--chalk);
+    padding:8px 9px;font-size:12.5px;font-family:'Inter',sans-serif;min-width:0;
+  }
+  .poll-input:focus{outline:none;border-color:var(--gold);}
+  .poll-copy-row .icon-btn{flex:0 0 auto;}
+
+  .expense-total-card{background:rgba(201,162,39,0.12);border:1px solid rgba(201,162,39,0.35);border-radius:var(--radius);padding:16px;margin-bottom:14px;text-align:center;}
+  .etc-label{font-size:11.5px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:0.05em;font-family:'JetBrains Mono',monospace;}
+  .etc-amount{font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;color:var(--gold);margin:4px 0 10px;}
+  .etc-currency-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:11.5px;color:var(--chalk-dim);}
+  .etc-currency-row input{
+    width:56px;text-align:center;background:rgba(255,255,255,0.06);border:1px solid var(--line);border-radius:6px;
+    color:var(--chalk);padding:5px 6px;font-size:12.5px;font-family:'Inter',sans-serif;
+  }
+  .expense-match-row{
+    display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;
+  }
+  .expense-match-row .em-info{flex:1;min-width:0;}
+  .expense-match-row .em-info b{font-size:13px;display:block;}
+  .expense-match-row .em-info span{font-size:11px;color:var(--chalk-dim);font-family:'JetBrains Mono',monospace;}
+  .expense-match-row .em-amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--gold);white-space:nowrap;}
+  .finance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px;}
+  .finance-card{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:12px 7px;text-align:center;}
+  .finance-card .fc-label{font-size:9.5px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:0.04em;font-family:'JetBrains Mono',monospace;line-height:1.3;}
+  .finance-card .fc-amt{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;margin-top:5px;color:var(--chalk);}
+  .finance-card.funds .fc-amt{color:#8fd19e;}
+  .finance-card.expenses .fc-amt{color:var(--gold);}
+  .finance-card.balance.positive .fc-amt{color:#8fd19e;}
+  .finance-card.balance.negative .fc-amt{color:var(--ball-bright);}
+  .finance-note{font-size:11.5px;color:var(--chalk-dim);line-height:1.45;background:rgba(201,162,39,0.08);border:1px solid rgba(201,162,39,0.22);border-radius:8px;padding:9px 11px;}
+  .expense-item-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .expense-item-row:last-child{border-bottom:none;}
+  .expense-item-row .ei-desc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .expense-item-row .ei-amt{font-family:'JetBrains Mono',monospace;color:var(--gold);white-space:nowrap;}
+  .expense-item-row .ei-del{background:none;border:none;color:#ef8577;cursor:pointer;font-size:14px;padding:2px 4px;}
+  .expense-item-row .ei-desc b{color:var(--chalk);font-weight:600;}
+  .expense-item-row .ei-desc span{color:var(--chalk-dim);font-size:11px;margin-left:5px;}
+  .expense-add-row select{flex:1.2;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:6px;color:var(--chalk);padding:8px 9px;font-size:12.5px;font-family:'Inter',sans-serif;min-width:0;}
+  .expense-add-row select:focus{outline:none;border-color:var(--gold);}
+  .match-expense-total{margin-top:10px;font-size:13px;font-weight:600;text-align:right;color:var(--chalk);}
+  .match-expense-total span{color:var(--gold);font-family:'JetBrains Mono',monospace;}
+
+  .contrib-stats{display:flex;gap:8px;margin:14px 0;}
+  .contrib-stats .cs-card{flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:10px 6px;text-align:center;}
+  .contrib-stats .cs-label{font-size:9.5px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:0.04em;font-family:'JetBrains Mono',monospace;}
+  .contrib-stats .cs-amt{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;margin-top:4px;}
+  .contrib-stats .cs-card.pending .cs-amt{color:var(--ball-bright);}
+  .contrib-stats .cs-card.received .cs-amt{color:#8fd19e;}
+  .contrib-stats .cs-card.expected .cs-amt{color:var(--gold);}
+  .contrib-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;}
+  .contrib-row .cr-info{flex:1;min-width:0;}
+  .contrib-row .cr-info b{font-size:13px;display:block;}
+  .contrib-row .cr-info span{font-size:11px;color:var(--chalk-dim);font-family:'JetBrains Mono',monospace;}
+  .contrib-row .cr-pending{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;white-space:nowrap;}
+  .contrib-row .cr-pending.zero{color:#8fd19e;}
+  .contrib-row .cr-pending.due{color:var(--ball-bright);}
+  .cp-header-row{display:flex;gap:6px;font-size:9.5px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:0.04em;padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:2px;}
+  .cp-header-row span{flex:1;text-align:right;}
+  .cp-header-row span:first-child{text-align:left;flex:1.2;}
+  .cp-month-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px;}
+  .cp-month-row .cm-label{flex:1.2;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--chalk-dim);}
+  .cp-month-row input{flex:1;width:0;min-width:0;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:6px;color:var(--chalk);padding:5px 6px;font-size:11.5px;text-align:right;font-family:'Inter',sans-serif;}
+  .cp-month-row input[type=month]{text-align:left;flex:1.2;}
+  .cp-month-row .cm-pending{flex:1;text-align:right;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px;}
+  .cp-month-row .cm-pending.zero{color:#8fd19e;}
+  .cp-month-row .cm-pending.due{color:var(--ball-bright);}
+  .cp-add-row button{flex:0 0 auto;width:auto;padding:6px 10px;}
+
+  footer{text-align:center;color:var(--chalk-dim);font-size:11px;margin-top:30px;opacity:0.6;}
+  .due-banner{background:rgba(166,41,29,0.18);border:1px solid rgba(166,41,29,0.5);border-radius:var(--radius);padding:13px 14px;margin-bottom:18px;}
+  .due-banner .dh{font-family:'Oswald',sans-serif;font-size:12.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--chalk);margin-bottom:8px;font-weight:600;}
+  .due-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(241,238,226,0.1);}
+  .due-item:first-of-type{border-top:none;}
+  .due-item .di{flex:1;font-size:12.5px;}
+  .due-item .di b{display:block;font-size:13.5px;}
+  .due-item button{background:var(--gold);border:none;color:var(--pitch-deep);border-radius:6px;padding:6px 11px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .due-banner .note{font-size:10.5px;color:var(--chalk-dim);margin-top:8px;line-height:1.4;}
+  .mark-sent-row{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;color:var(--chalk-dim);}
+  .mark-sent-row input{accent-color:var(--gold);width:15px;height:15px;}
+
+  /* Supabase auth */
+  .auth-bar{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(255,255,255,.035);}
+  .auth-bar .auth-title{font:600 12px 'JetBrains Mono',monospace;color:var(--chalk-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;}
+  .auth-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .auth-row input{min-width:0;flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:6px;color:var(--chalk);padding:8px 9px;font-size:12px;}
+  .auth-btn{background:var(--gold);color:var(--pitch-deep);border:0;border-radius:6px;padding:8px 11px;font-weight:700;cursor:pointer;font-size:12px;}
+  .auth-btn.secondary{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+  .auth-status{margin-top:7px;font-size:11px;color:var(--chalk-dim);line-height:1.4;}
+  .auth-status.ok{color:#8fd19e;}
+  .auth-status.err{color:#ef8577;}
+  .admin-only[disabled], .admin-only.disabled{opacity:.45;cursor:not-allowed;}
+  body:not(.admin) .admin-only{pointer-events:none;opacity:.45;}
+
+  /* Access gate */
+  body{overflow:hidden;}
+  body.gate-unlocked{overflow:visible;}
+  .access-gate{
+    position:fixed;inset:0;z-index:1000;background:var(--pitch-deep);
+    display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+  }
+  body.gate-unlocked .access-gate{display:none;}
+  .access-gate::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at 50% -10%, rgba(201,162,39,0.14), transparent 55%);
+  }
+  .gate-panel{position:relative;width:100%;max-width:400px;margin:auto;border:1px solid var(--line);border-radius:14px;background:var(--pitch);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+  .gate-hero{position:relative;height:150px;}
+  .gate-hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;}
+  .gate-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,32,25,.1),var(--pitch) 97%);}
+  .gate-body{padding:6px 26px 26px;}
+  .gate-body h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:2px 0 6px;}
+  .gate-sub{color:var(--chalk-dim);font-size:12.5px;line-height:1.45;margin:0 0 18px;}
+  .gate-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+  .gate-tab{flex:1;background:none;border:none;color:var(--chalk-dim);font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.03em;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .gate-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .gate-pane{display:flex;flex-direction:column;gap:9px;}
+  .gate-label{font:600 10.5px 'JetBrains Mono',monospace;letter-spacing:.05em;color:var(--chalk-dim);text-transform:uppercase;margin-top:2px;}
+  .gate-pane input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:7px;color:var(--chalk);padding:10px 11px;font-size:13.5px;font-family:'Inter',sans-serif;width:100%;}
+  .gate-hint{font-size:11.5px;color:var(--chalk-dim);line-height:1.4;margin:0 0 2px;}
+  .gate-btn{border:0;border-radius:7px;padding:11px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;width:100%;}
+  .gate-btn.primary{background:var(--gold);color:var(--pitch-deep);margin-top:4px;}
+  .gate-btn.link{background:none;color:var(--chalk-dim);font-weight:600;font-size:11.5px;padding:6px;text-decoration:underline;}
+  .gate-btn.guest{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+  .gate-status{font-size:11.5px;line-height:1.4;min-height:14px;margin:8px 0 0;color:var(--chalk-dim);}
+  .gate-status.ok{color:#8fd19e;}
+  .gate-status.err{color:#ef8577;}
+  .gate-divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:var(--chalk-dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;}
+  .gate-divider::before,.gate-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+  .gate-guest-note{font-size:11px;color:var(--chalk-dim);line-height:1.4;margin:10px 0 0;text-align:center;}
+  @media(max-width:480px){.gate-hero{height:120px;} .gate-body{padding:6px 20px 22px;}}
+  body.player .page-tab[data-page-link="finances"],
+  body.player .page-tab[data-page-link="contributions"],
+  body.player .dash-card.expense,
+  body.player .dash-card.received,
+  body.player .dash-card.balance,
+  body.player .season-summary-card,
+  body.player .home-quick a[href="finances.html"],
+  body.player .home-quick a[href="contributions.html"]{display:none !important;}
+</style>
+</head>
+<body data-site-page="home">
+<div id="accessGate" class="access-gate">
+  <div class="gate-panel">
+    <div class="gate-hero">
+      <img src="ecp-spartans-hero.jpeg" alt="ECP Spartans cricket player celebrating with a raised bat">
+    </div>
+    <div class="gate-body">
+      <div class="eyebrow">◈ Cricket Club Hub</div>
+      <h1>ECP Spartans</h1>
+      <p class="gate-sub">Fixtures, team availability, expenses, and collections in one place.</p>
+
+      <div class="gate-tabs">
+        <button type="button" class="gate-tab active" data-gate-tab="login">Log in</button>
+        <button type="button" class="gate-tab" data-gate-tab="playersignup">Player sign-up</button>
+        <button type="button" class="gate-tab" data-gate-tab="signup">Admin setup</button>
+      </div>
+
+      <div class="gate-pane" data-gate-pane="login">
+        <label class="gate-label" for="gateEmail">Email</label>
+        <input id="gateEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="gate-label" for="gatePassword">Password</label>
+        <input id="gatePassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" class="gate-btn primary" id="gateLoginBtn">Log in</button>
+        <button type="button" class="gate-btn link" id="gateMagicBtn">Email me a login link instead</button>
+      </div>
+
+      <div class="gate-pane" data-gate-pane="playersignup" hidden>
+        <p class="gate-hint">For registered players — your email needs to already be on the Team Sheet (added by admin) before you can create your login.</p>
+        <label class="gate-label" for="gatePlayerEmail">Your email</label>
+        <input id="gatePlayerEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="gate-label" for="gatePlayerPassword">Choose a password</label>
+        <input id="gatePlayerPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <button type="button" class="gate-btn primary" id="gatePlayerSignupBtn">Create player account</button>
+      </div>
+
+      <div class="gate-pane" data-gate-pane="signup" hidden>
+        <p class="gate-hint">First time setting up? Only the club's admin email can register.</p>
+        <label class="gate-label" for="gateSignupEmail">Admin email</label>
+        <input id="gateSignupEmail" type="email" placeholder="Admin email" autocomplete="email">
+        <label class="gate-label" for="gateSignupPassword">Choose a password</label>
+        <input id="gateSignupPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <button type="button" class="gate-btn primary" id="gateSignupBtn">Create admin account</button>
+      </div>
+
+      <div class="gate-status" id="gateStatus"></div>
+
+      <div class="gate-divider"><span>or</span></div>
+
+      <button type="button" class="gate-btn guest" id="gateGuestBtn">Continue as Guest</button>
+      <p class="gate-guest-note">Guests can view fixtures, finances, and contributions. Registered players see fixtures only and can log in to mark their own match availability. Only the admin account can add or edit other data.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">◈ Cricket Club Hub</div>
+    <h1>ECP Spartans</h1>
+    <div class="sub">Fixtures, team availability, expenses, and collections in one place.</div>
+
+    <div class="auth-bar" id="authBar">
+      <div class="auth-row" id="authGuestRow" hidden>
+        <span class="auth-status" style="flex:1;align-self:center;">👤 Browsing as Guest — view only</span>
+        <button class="auth-btn secondary" id="authGuestSwitchBtn">Log in</button>
+      </div>
+      <div class="auth-row" id="authSignedIn" hidden>
+        <span id="authUserLabel" class="auth-status ok" style="flex:1;align-self:center;"></span>
+        <button class="auth-btn secondary admin-only" id="authMigrateBtn">Import device data</button>
+        <button class="auth-btn secondary" id="authLogoutBtn">Logout</button>
+      </div>
+      <div class="auth-status" id="authStatus"></div>
+    </div>
+
+    <div class="upload-box" data-page="fixtures">
+      <div class="ic">🏏</div>
+      <div class="txt">
+        <b>Fixture list (.xlsx)</b>
+        Columns: Date, Opponent, Venue, Time — any order, any names close to these.
+      </div>
+      <label class="file-btn" for="fileInput">UPLOAD</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+    <div id="parseStatus" class="parse-status" data-page="fixtures"></div>
+  </header>
+
+  <nav class="page-nav" aria-label="Site pages">
+      <a class="page-tab" data-page-link="home" href="index.html">Home</a>
+      <a class="page-tab" data-page-link="fixtures" href="fixtures.html">Fixtures</a>
+      <a class="page-tab" data-page-link="finances" href="finances.html">Finances</a>
+      <a class="page-tab" data-page-link="contributions" href="contributions.html">Contributions</a>
+      <a class="page-tab" data-page-link="team-stats" href="team-stats.html">Team Stats</a>
+      <a class="page-tab" data-page-link="player-stats" href="player-stats.html">Player Stats</a>
+      <a class="page-tab" data-page-link="admin" href="admin.html">Admin</a>
+    </nav>
+
+  <section class="hero" id="homeSection" data-page="home">
+    <img src="ecp-spartans-hero.jpeg" alt="ECP Spartans cricket player celebrating with a raised bat">
+    <div class="hero-copy"><div class="kicker">ECP Spartans Cricket Club</div><h2>ECP Spartans</h2><p>Play hard. Stand together. Own the day.</p></div>
+  </section>
+
+  <section class="home-dashboard" data-page="home" aria-label="Club overview">
+    <div class="sec-head"><h2>Club Overview</h2><span class="n">Live club summary</span></div>
+    <div class="dashboard-grid">
+      <a class="dash-card next" href="fixtures.html">
+        <div class="dash-icon">🏏</div>
+        <div class="dash-label">Next Match</div>
+        <div class="dash-value" id="homeNextMatch">No fixture yet</div>
+        <div class="dash-meta" id="homeNextMatchMeta">Add fixtures from the Fixtures page</div>
+      </a>
+      <a class="dash-card expense" href="finances.html">
+        <div class="dash-icon">💰</div>
+        <div class="dash-label">Season Expenses</div>
+        <div class="dash-value" id="homeExpenseTotal">Rs 0</div>
+        <div class="dash-meta">Recorded spending</div>
+      </a>
+      <a class="dash-card received" href="contributions.html">
+        <div class="dash-icon">💵</div>
+        <div class="dash-label">Contributions Received</div>
+        <div class="dash-value" id="homeContributionTotal">Rs 0</div>
+        <div class="dash-meta" id="homeContributionMeta">No contribution data yet</div>
+      </a>
+      <a class="dash-card balance" href="finances.html">
+        <div class="dash-icon">📊</div>
+        <div class="dash-label" id="homeBalanceLabel">Balance</div>
+        <div class="dash-value" id="homeBalanceTotal">Rs 0</div>
+        <div class="dash-meta" id="homeBalanceMeta">Received minus expenses</div>
+      </a>
+    </div>
+    <div class="home-quick">
+      <a href="fixtures.html">View Fixtures <span>→</span></a>
+      <a href="finances.html">View Finances <span>→</span></a>
+      <a href="contributions.html">View Contributions <span>→</span></a>
+    </div>
+
+    <div class="season-summary-card">
+      <div class="ssc-icon">📋</div>
+      <div class="ssc-info">
+        <div class="ssc-label">Season Summary Report</div>
+        <div class="ssc-desc" id="seasonSummaryDesc">One PDF covering match results, finances, contributions and top performers for the season.</div>
+      </div>
+      <button class="file-btn" id="seasonSummaryBtn" type="button">Download PDF</button>
+    </div>
+  </section>
+
+  <div id="dueBanner" data-page="fixtures" style="display:none;"></div>
+
+  <div class="view-toggle" id="fixturesViewToggle" data-page="fixtures" style="display:none;">
+    <button type="button" class="active" data-view="date">By Date</button>
+    <button type="button" data-view="team">By Team</button>
+  </div>
+
+  <div id="calSection" data-page="fixtures" style="display:none;">
+    <div class="sec-head"><h2>Calendar</h2><span class="n" id="matchCount">0 matches</span></div>
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button id="prevMonth">‹</button>
+        <div class="m" id="monthLabel"></div>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><i class="dot m"></i>Match day</span>
+        <span><i class="dot o"></i>Off (weekend)</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="upcomingSection" data-page="fixtures" style="display:none;">
+    <div class="sec-head"><h2>Upcoming & Reminders</h2></div>
+    <div class="filter-row">
+      <button data-f="7" class="active">Next 7 days</button>
+      <button data-f="14">Next 14 days</button>
+      <button data-f="all">All upcoming</button>
+    </div>
+    <div id="upcomingList"></div>
+  </div>
+
+  <div id="teamWiseSection" data-page="fixtures" style="display:none;">
+    <div class="sec-head"><h2>Fixtures by Team</h2><span class="n" id="teamWiseCount">0 teams</span></div>
+    <div id="teamWiseList"></div>
+  </div>
+
+  <div id="emptyState" data-page="fixtures" class="empty">No fixtures loaded yet. Upload your schedule to get started.</div>
+
+  <div id="expenseSection" data-page="finances" style="display:none;">
+    <div class="sec-head"><h2>Season Expenses</h2><span class="n" id="expenseCount">0 entries</span></div>
+    <div class="upload-box">
+      <div class="ic">📒</div>
+      <div class="txt"><b>Match expenses workbook (.xlsx)</b>Import the ECP match-wise expense sheet: fixtures, expense heads and totals are mapped automatically.</div>
+      <label class="file-btn" for="expenseFileInput">IMPORT</label>
+      <input type="file" id="expenseFileInput" accept=".xlsx,.xls">
+    </div>
+    <div id="expenseParseStatus" class="parse-status"></div>
+    <div class="expense-total-card">
+      <div class="etc-label">Total spent this season</div>
+      <div class="etc-amount" id="seasonExpenseTotal">0</div>
+      <div class="etc-currency-row">
+        <span>Currency</span>
+        <input type="text" id="currencyInput" maxlength="6">
+      </div>
+    </div>
+    <div id="expenseByMatchList"></div>
+  </div>
+
+  <div id="financeSection" data-page="finances" style="display:none;">
+    <div class="sec-head"><h2>Funds vs Expenses</h2><span class="n">Season position</span></div>
+    <div class="finance-grid" id="financeGrid"></div>
+    <div class="finance-note" id="financeNote"></div>
+  </div>
+
+  <div id="contribSection" data-page="contributions">
+    <div class="sec-head"><h2>Player Contributions</h2><span class="n" id="contribCount">0 players</span></div>
+    <div class="upload-box">
+      <div class="ic">💵</div>
+      <div class="txt">
+        <b>Contributions file (.xlsx)</b>
+        Player names with monthly amounts — expected &amp; received, if present.
+      </div>
+      <label class="file-btn" for="contribFileInput">UPLOAD</label>
+      <input type="file" id="contribFileInput" accept=".xlsx,.xls">
+    </div>
+    <div id="contribParseStatus" class="parse-status"></div>
+    <div class="contrib-stats" id="contribStats"></div>
+    <div id="contribList"></div>
+  </div>
+
+  <div id="teamSection" data-page="admin">
+    <div class="sec-head"><h2>Team Sheet</h2><span class="n" id="contactCount">0 contacts</span></div>
+    <div id="contactList"></div>
+    <div class="add-contact">
+      <input class="name" id="newName" placeholder="Player name">
+      <input class="phone" id="newPhone" placeholder="+91 98765 43210">
+      <input class="email" id="newEmail" type="email" placeholder="Email (for player login)">
+      <button id="addContactBtn">+</button>
+    </div>
+    <div class="hint">Phone numbers need the country code (e.g. +91...). Reminders open WhatsApp with the message pre-filled — you still tap Send in WhatsApp for each person, since there's no auto-bulk-send without a WhatsApp Business API.</div>
+  </div>
+
+  <footer id="storageFooter">Data is stored in Supabase. Public visitors can view; only the admin account can edit.</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <button class="close-x" id="closeSheet">✕</button>
+    <div class="sheet-handle"></div>
+    <h3 id="mTitle"></h3>
+    <div class="when" id="mWhen"></div>
+    <div class="row"><span>Venue</span><span id="mVenue"></span></div>
+    <div class="row"><span>Ground / Location</span><span id="mLoc"></span></div>
+
+    <div class="msg-section">
+      <div class="msg-label">🏏 To your team</div>
+      <textarea class="msg-box editable" id="mTeamMsg"></textarea>
+      <div class="btnrow">
+        <button class="icon-btn" id="copyTeamBtn">Copy message</button>
+      </div>
+      <div class="send-list" id="sendListTeam"></div>
+      <div class="mark-sent-row">
+        <input type="checkbox" id="markSentChk">
+        <label for="markSentChk">Mark reminder as sent for this match (clears it from the "due" list)</label>
+      </div>
+    </div>
+
+    <div class="msg-section">
+      <div class="msg-label">✅ Availability check</div>
+      <textarea class="msg-box editable" id="mAvailMsg"></textarea>
+      <div class="btnrow">
+        <button class="icon-btn" id="copyAvailBtn">Copy message</button>
+      </div>
+      <div class="send-list" id="sendListAvail"></div>
+
+      <div class="poll-box">
+        <div class="poll-label">📊 Or post a real Poll in your group</div>
+        <div class="poll-hint">WhatsApp only lets the poll be created inside the app — no link or app can post one for you. Tap Copy below, then in your group: <b>+ → Poll</b>, paste the question, add the two options.</div>
+        <label class="poll-field-label">Question</label>
+        <div class="poll-copy-row">
+          <input type="text" id="pollQuestion" class="poll-input">
+          <button class="icon-btn" id="copyPollQBtn">Copy</button>
+        </div>
+        <label class="poll-field-label">Option 1</label>
+        <div class="poll-copy-row">
+          <input type="text" id="pollOpt1" class="poll-input">
+          <button class="icon-btn" id="copyPollO1Btn">Copy</button>
+        </div>
+        <label class="poll-field-label">Option 2</label>
+        <div class="poll-copy-row">
+          <input type="text" id="pollOpt2" class="poll-input">
+          <button class="icon-btn" id="copyPollO2Btn">Copy</button>
+        </div>
+      </div>
+
+      <div class="avail-summary" id="availSummary"></div>
+      <div class="avail-hint">WhatsApp can't report replies back here — tap a player's status below once they reply (from the poll results or chat). Registered players can also log in and mark their own status directly.</div>
+      <div class="avail-roster" id="availRoster"></div>
+    </div>
+
+    <div class="msg-section">
+      <div class="msg-label">🤝 To opponent captain</div>
+      <div class="add-contact" style="margin-top:0;margin-bottom:8px;">
+        <input class="name" id="captainName" placeholder="Captain name (optional)">
+        <input class="phone" id="captainPhone" placeholder="+91 98765 43210">
+      </div>
+      <textarea class="msg-box editable" id="mCaptainMsg"></textarea>
+      <div class="btnrow">
+        <button class="icon-btn" id="copyCaptainBtn">Copy message</button>
+        <button class="icon-btn wa" id="sendCaptainBtn">Send WhatsApp ↗</button>
+      </div>
+      <div class="hint" id="captainSavedHint" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="msg-section">
+      <div class="msg-label">💰 Expenses for this match</div>
+      <div id="expenseItems"></div>
+      <div class="add-contact expense-add-row" style="margin-top:8px;">
+        <select id="expCategory" aria-label="Expense category"></select>
+        <input class="name" id="expNote" placeholder="Note (optional)">
+        <input class="phone" id="expAmount" type="number" inputmode="decimal" placeholder="Amount" style="flex:0.6;">
+        <button id="addExpenseBtn">+</button>
+      </div>
+      <div class="match-expense-total" id="matchExpenseTotal"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="contribOverlay">
+  <div class="sheet">
+    <button class="close-x" id="closeContribSheet">✕</button>
+    <div class="sheet-handle"></div>
+    <h3 id="cpName"></h3>
+    <div class="when" id="cpTotals"></div>
+    <div id="cpMonthTable"></div>
+
+    <div class="msg-section">
+      <div class="msg-label">💬 Payment reminder</div>
+      <div class="add-contact" style="margin-top:0;margin-bottom:8px;">
+        <input class="phone" id="cpPhone" placeholder="+92 300 1234567" style="flex:1;">
+      </div>
+      <textarea class="msg-box editable" id="cpMsg"></textarea>
+      <div class="btnrow">
+        <button class="icon-btn" id="cpCopyBtn">Copy message</button>
+        <button class="icon-btn wa" id="cpSendBtn">Send WhatsApp ↗</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const state = { matches: [], contacts: [], captainContacts: {}, availability: {}, remindersSent: {}, expenses: {}, contributions: {}, currency: 'Rs', month: new Date() };
+  let activeMatch = null;
+  let filterDays = 7;
+  let fixturesView = 'date';
+  const EXPENSE_CATEGORIES = ['Ground Contribution','Ground Man','Umpires Share','Balls','Water Bottles - Refundable','Water & Ice','ORS','Tea','Fruits','Lunch - Team','Lunch/Dinner - Guest or Guest Team','Medicines','Broadcasting Expense','Miscellaneous'];
+
+  const $ = (id) => document.getElementById(id);
+  let currentPage = 'home';
+  function showPage(page, updateHash=true){
+    const pages = ['home','fixtures','finances','contributions','admin'];
+    currentPage = pages.includes(page) ? page : 'home';
+    document.querySelectorAll('[data-page]').forEach(el=>{ el.hidden = el.dataset.page !== currentPage; });
+    $('storageFooter').hidden = (currentPage === 'home');
+    document.querySelectorAll('.page-tab').forEach(btn=>btn.classList.toggle('active', (btn.dataset.pageLink || btn.dataset.go) === currentPage));
+    if(updateHash && location.hash !== '#'+currentPage) location.hash = currentPage;
+  }
+  document.querySelectorAll('.page-tab').forEach(btn=>btn.addEventListener('click', (e)=>{ if(btn.dataset.pageLink) return; showPage(btn.dataset.go); }));
+  window.addEventListener('hashchange', ()=>showPage(location.hash.slice(1), false));
+  const SUPABASE_URL = 'https://vttyyoenrzuhbloocfgr.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable__i92X7tfRMOfpjcVUmqhkg_wQ1pwdgp';
+  const ADMIN_EMAIL = 'ammarsajid666@gmail.com';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let currentUser = null;
+  let isAdmin = false;
+  let isPlayer = false;
+  let currentPlayerContact = null;
+  let availabilityCache = {};
+  function computeRoles(){
+    isPlayer = false;
+    currentPlayerContact = null;
+    if(currentUser && !isAdmin){
+      const email = (currentUser.email || '').toLowerCase();
+      const match = email ? state.contacts.find(c => (c.email||'').trim().toLowerCase() === email) : null;
+      if(match){ isPlayer = true; currentPlayerContact = match; }
+    }
+  }
+
+  function setAuthStatus(message, type=''){
+    const el = $('authStatus');
+    el.textContent = message;
+    el.className = 'auth-status' + (type ? ' '+type : '');
+  }
+  function setGateStatus(message, type=''){
+    const el = $('gateStatus');
+    if(!el) return;
+    el.textContent = message;
+    el.className = 'gate-status' + (type ? ' '+type : '');
+  }
+  const ACCESS_KEY = 'ecpAccessMode';
+  function isGuestMode(){ return localStorage.getItem(ACCESS_KEY) === 'guest'; }
+  function evaluateAccess(){
+    document.body.classList.toggle('gate-unlocked', !!currentUser || isGuestMode());
+  }
+  function updateAuthUI(){
+    document.body.classList.toggle('admin', isAdmin);
+    document.body.classList.toggle('player', isPlayer);
+    const guest = !currentUser && isGuestMode();
+    $('authGuestRow').hidden = !guest;
+    $('authSignedIn').hidden = !currentUser;
+    if(currentUser){
+      const roleLabel = isAdmin ? 'Admin editing enabled' : (isPlayer ? 'Player · can mark own availability' : 'Read-only');
+      $('authUserLabel').textContent = `Signed in as ${currentUser.email} · ${roleLabel}`;
+      setAuthStatus(isAdmin ? 'You can now edit and save club data.' : (isPlayer ? "You can mark your own match availability from a match's details." : "This account isn't linked to a player on the Team Sheet — read-only access."), (isAdmin || isPlayer) ? 'ok' : 'err');
+    }else{
+      setAuthStatus('');
+    }
+    evaluateAccess();
+    if(isPlayer && (currentPage === 'finances' || currentPage === 'contributions')){
+      location.href = 'fixtures.html';
+    }
+  }
+  function requireAdmin(){
+    if(!isAdmin){
+      setAuthStatus('Admin login required to make changes.', 'err');
+      return false;
+    }
+    return true;
+  }
+
+  const persist = {
+    async get(key){
+      const {data, error} = await supabase.from('club_data').select('value').eq('key', key).maybeSingle();
+      if(error) throw error;
+      if(!data) return null;
+      const value = typeof data.value === 'string' ? data.value : JSON.stringify(data.value);
+      return {value};
+    },
+    async set(key, value){
+      if(!requireAdmin()) throw new Error('Admin login required');
+      const {error} = await supabase.from('club_data').upsert({key, value, updated_at:new Date().toISOString(), updated_by:currentUser.id}, {onConflict:'key'});
+      if(error) throw error;
+    }
+  };
+
+  // ---------- Access gate ----------
+  document.querySelectorAll('.gate-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.gate-tab').forEach(t=>t.classList.toggle('active', t===tab));
+      document.querySelectorAll('.gate-pane').forEach(p=>{ p.hidden = p.dataset.gatePane !== tab.dataset.gateTab; });
+      setGateStatus('');
+    });
+  });
+  $('gateGuestBtn').addEventListener('click', ()=>{
+    localStorage.setItem(ACCESS_KEY, 'guest');
+    updateAuthUI();
+  });
+  $('authGuestSwitchBtn').addEventListener('click', ()=>{
+    localStorage.removeItem(ACCESS_KEY);
+    updateAuthUI();
+  });
+
+  // ---------- Supabase auth ----------
+  $('gateLoginBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    const password = $('gatePassword').value;
+    if(!email || !password){ setGateStatus('Enter your email and password.', 'err'); return; }
+    setGateStatus('Signing in…');
+    const {error} = await supabase.auth.signInWithPassword({email, password});
+    if(error) setGateStatus(error.message, 'err');
+  });
+  $('gateMagicBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    if(!email){ setGateStatus('Enter your email first.', 'err'); return; }
+    setGateStatus('Sending login link…');
+    const {error} = await supabase.auth.signInWithOtp({email, options:{emailRedirectTo:window.location.href}});
+    if(error) setGateStatus(error.message, 'err');
+    else setGateStatus('Login link sent. Check your email and open the link on this device.', 'ok');
+  });
+  $('gateSignupBtn').addEventListener('click', async ()=>{
+    const email = $('gateSignupEmail').value.trim().toLowerCase();
+    const password = $('gateSignupPassword').value;
+    if(email !== ADMIN_EMAIL){ setGateStatus('Only the configured admin email can create the admin account.', 'err'); return; }
+    if(password.length < 6){ setGateStatus('Choose a password with at least 6 characters.', 'err'); return; }
+    setGateStatus('Creating your admin account…');
+    const {data, error} = await supabase.auth.signUp({email, password});
+    if(error) setGateStatus(error.message, 'err');
+    else if(data.session) setGateStatus('Admin account created and signed in.', 'ok');
+    else setGateStatus('Account created. Check your email if confirmation is required, then log in.', 'ok');
+  });
+  $('gatePlayerSignupBtn').addEventListener('click', async ()=>{
+    const email = $('gatePlayerEmail').value.trim().toLowerCase();
+    const password = $('gatePlayerPassword').value;
+    if(!email || !password){ setGateStatus('Enter your email and a password.', 'err'); return; }
+    if(password.length < 6){ setGateStatus('Choose a password with at least 6 characters.', 'err'); return; }
+    const onRoster = state.contacts.some(c => (c.email||'').trim().toLowerCase() === email);
+    if(!onRoster){ setGateStatus("This email isn't on the Team Sheet yet. Ask your admin to add it first.", 'err'); return; }
+    setGateStatus('Creating your player account…');
+    const {data, error} = await supabase.auth.signUp({email, password});
+    if(error) setGateStatus(error.message, 'err');
+    else if(data.session) setGateStatus('Player account created and signed in.', 'ok');
+    else setGateStatus('Account created. Check your email if confirmation is required, then log in.', 'ok');
+  });
+  $('authLogoutBtn').addEventListener('click', async ()=>{ localStorage.removeItem(ACCESS_KEY); await supabase.auth.signOut(); });
+  $('authMigrateBtn').addEventListener('click', async ()=>{
+    if(!requireAdmin()) return;
+    const keys=['matches','contacts','captainContacts','availability','remindersSent','expenses','contributions','currencySymbol'];
+    let count=0;
+    for(const key of keys){
+      const raw=localStorage.getItem(key);
+      if(raw!==null){ await persist.set(key, raw); count++; }
+    }
+    setAuthStatus(count ? `Imported ${count} local data sets into Supabase.` : 'No localStorage data was found on this device.', count ? 'ok' : '');
+    await loadAll();
+  });
+  supabase.auth.onAuthStateChange(async (_event, session)=>{
+    currentUser = session?.user || null;
+    isAdmin = !!currentUser && (currentUser.email || '').toLowerCase() === ADMIN_EMAIL;
+    computeRoles();
+    if(currentUser) localStorage.removeItem(ACCESS_KEY);
+    updateAuthUI();
+    if(currentUser) await loadAll();
+  });
+  supabase.auth.getSession().then(async ({data})=>{
+    currentUser=data.session?.user || null;
+    isAdmin=!!currentUser && (currentUser.email || '').toLowerCase()===ADMIN_EMAIL;
+    computeRoles();
+    if(currentUser) localStorage.removeItem(ACCESS_KEY);
+    updateAuthUI();
+  });
+  evaluateAccess();
+
+  // ---------- storage ----------
+  async function loadAll(){
+    try{
+      const m = await persist.get('matches', false);
+      state.matches = m ? JSON.parse(m.value) : [];
+    }catch(e){ state.matches = []; }
+    try{
+      const c = await persist.get('contacts', false);
+      state.contacts = c ? JSON.parse(c.value) : [];
+    }catch(e){ state.contacts = []; }
+    try{
+      const cc = await persist.get('captainContacts', false);
+      state.captainContacts = cc ? JSON.parse(cc.value) : {};
+    }catch(e){ state.captainContacts = {}; }
+    try{
+      const av = await persist.get('availability', false);
+      state.availability = av ? JSON.parse(av.value) : {};
+    }catch(e){ state.availability = {}; }
+    try{
+      const rs = await persist.get('remindersSent', false);
+      state.remindersSent = rs ? JSON.parse(rs.value) : {};
+    }catch(e){ state.remindersSent = {}; }
+    try{
+      const ex = await persist.get('expenses', false);
+      state.expenses = ex ? JSON.parse(ex.value) : {};
+    }catch(e){ state.expenses = {}; }
+    try{
+      const co = await persist.get('contributions', false);
+      state.contributions = co ? JSON.parse(co.value) : {};
+    }catch(e){ state.contributions = {}; }
+    try{
+      const cur = await persist.get('currencySymbol', false);
+      state.currency = cur ? cur.value : 'Rs';
+    }catch(e){ state.currency = 'Rs'; }
+    $('currencyInput').value = state.currency;
+    computeRoles();
+    updateAuthUI();
+    render();
+  }
+  async function saveMatches(){
+    try{ await persist.set('matches', JSON.stringify(state.matches), false); }catch(e){}
+  }
+  async function saveContacts(){
+    try{ await persist.set('contacts', JSON.stringify(state.contacts), false); }catch(e){}
+  }
+  async function saveCaptainContacts(){
+    try{ await persist.set('captainContacts', JSON.stringify(state.captainContacts), false); }catch(e){}
+  }
+  async function saveAvailability(){
+    try{ await persist.set('availability', JSON.stringify(state.availability), false); }catch(e){}
+  }
+  async function fetchAvailability(matchKeyStr){
+    try{
+      const {data, error} = await supabase.from('availability_responses').select('player_name,player_email,status').eq('match_key', matchKeyStr);
+      if(error) throw error;
+      const rec = {};
+      (data||[]).forEach(row=>{ rec[row.player_name] = row.status; });
+      availabilityCache[matchKeyStr] = rec;
+    }catch(e){
+      availabilityCache[matchKeyStr] = availabilityCache[matchKeyStr] || {};
+    }
+    return availabilityCache[matchKeyStr];
+  }
+  async function submitAvailability(matchKeyStr, playerName, playerEmail, status){
+    if(status === 'pending'){
+      const {error} = await supabase.from('availability_responses').delete().eq('match_key', matchKeyStr).eq('player_name', playerName);
+      if(error) throw error;
+    }else{
+      const {error} = await supabase.from('availability_responses').upsert({match_key: matchKeyStr, player_name: playerName, player_email: playerEmail || '', status, responded_at: new Date().toISOString()}, {onConflict:'match_key,player_name'});
+      if(error) throw error;
+    }
+  }
+  async function saveRemindersSent(){
+    try{ await persist.set('remindersSent', JSON.stringify(state.remindersSent), false); }catch(e){}
+  }
+  async function saveExpenses(){
+    try{ await persist.set('expenses', JSON.stringify(state.expenses), false); }catch(e){}
+  }
+  async function saveContributions(){
+    try{ await persist.set('contributions', JSON.stringify(state.contributions), false); }catch(e){}
+  }
+  async function saveCurrency(){
+    try{ await persist.set('currencySymbol', state.currency, false); }catch(e){}
+  }
+
+  // ---------- excel parsing ----------
+  const HEAD_MAP = {
+    date: ['date','matchdate','fixturedate','day','daydate','dateday'],
+    opponent: ['opponent','opposition','team','vs','against','opponentteam'],
+    venue: ['venue','homeaway','groundtype','type','ground','stadium','place'],
+    time: ['time','matchtime','starttime','kickoff'],
+    location: ['location','ground','stadium','place']
+  };
+  const SKIP_VALUES = ['no match','off','rest','bye','tbd','n/a','na','-'];
+  function normHead(h){ return String(h||'').toLowerCase().replace(/[^a-z]/g,''); }
+  function findCol(headers, keys){
+    for(let i=0;i<headers.length;i++){
+      const h = normHead(headers[i]);
+      if(keys.includes(h)) return i;
+    }
+    return -1;
+  }
+  function toISODate(v){
+    if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+    if(typeof v === 'number'){
+      const d = new Date(Math.round((v-25569)*86400*1000));
+      if(!isNaN(d)) return d.toISOString().slice(0,10);
+    }
+    if(typeof v === 'string'){
+      // Text dates (e.g. "Saturday, September 26, 2026") are parsed as LOCAL
+      // midnight by the JS Date constructor — read the date back out with
+      // local getters too, so a UTC conversion doesn't shift it a day.
+      const d = new Date(v);
+      if(!isNaN(d)) return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    return null;
+  }
+
+  function expenseLabel(item){ const category = item.category || item.desc || 'Other expense'; return item.note ? `<b>${escapeHtml(category)}</b><span>— ${escapeHtml(item.note)}</span>` : `<b>${escapeHtml(category)}</b>`; }
+  function fillExpenseCategories(){ $('expCategory').innerHTML = EXPENSE_CATEGORIES.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join(''); }
+
+  $('fileInput').addEventListener('change', function(e){
+    if(!requireAdmin()){ this.value=''; return; }
+    const file = e.target.files[0];
+    if(!file) return;
+    const status = $('parseStatus');
+    status.className = 'parse-status';
+    status.textContent = 'Reading file…';
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
+        if(!rows.length) throw new Error('Sheet looks empty.');
+
+        // scan the first several rows to find the real header row (titles/blank rows may come first)
+        let headerRowIdx = -1, cDate=-1, cOpp=-1, cVenue=-1, cTime=-1, cLoc=-1;
+        const scanLimit = Math.min(rows.length, 15);
+        for(let i=0;i<scanLimit;i++){
+          const hdr = rows[i] || [];
+          const d = findCol(hdr, HEAD_MAP.date);
+          const o = findCol(hdr, HEAD_MAP.opponent);
+          if(d!==-1 && o!==-1){
+            headerRowIdx = i; cDate=d; cOpp=o;
+            cVenue = findCol(hdr, HEAD_MAP.venue);
+            cTime = findCol(hdr, HEAD_MAP.time);
+            cLoc = findCol(hdr, HEAD_MAP.location);
+            break;
+          }
+        }
+        if(headerRowIdx === -1) throw new Error('Could not find Date and Opponent columns. Check your headers.');
+
+        const parsed = [];
+        for(let i=headerRowIdx+1;i<rows.length;i++){
+          const r = rows[i];
+          if(!r || r.length===0) continue;
+          const iso = toISODate(r[cDate]);
+          const oppRaw = r[cOpp] ? String(r[cOpp]).trim() : '';
+          if(!iso || !oppRaw) continue;
+          if(SKIP_VALUES.includes(oppRaw.toLowerCase())) continue;
+          const venueRaw = cVenue!==-1 && r[cVenue] ? String(r[cVenue]).trim() : '';
+          if(venueRaw && SKIP_VALUES.includes(venueRaw.toLowerCase())) continue;
+          parsed.push({
+            date: iso,
+            opponent: oppRaw,
+            venue: venueRaw,
+            time: cTime!==-1 && r[cTime] ? String(r[cTime]).trim() : '',
+            location: cLoc!==-1 && r[cLoc] ? String(r[cLoc]).trim() : ''
+          });
+        }
+        if(!parsed.length) throw new Error('No valid match rows found — every row may be marked "No Match".');
+        state.matches = parsed.sort((a,b)=> a.date.localeCompare(b.date));
+        saveMatches();
+        status.className = 'parse-status ok';
+        status.textContent = `Loaded ${parsed.length} matches.`;
+        state.month = new Date();
+        render();
+      }catch(err){
+        status.className = 'parse-status err';
+        status.textContent = 'Could not read that file — ' + err.message;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function normalizeExpenseHead(v){
+    const n = normHead(String(v || '').trim());
+    if(n === 'medicens' || n === 'medicines') return 'Medicines';
+    if(n === 'lunchguestorguestteam' || n === 'lunchdinnerguestorguestteam') return 'Lunch/Dinner - Guest or Guest Team';
+    if(n === 'broadcastingexpense' || n === 'broadcasting') return 'Broadcasting Expense';
+    return EXPENSE_CATEGORIES.find(c => normHead(c) === n) || null;
+  }
+  $('expenseFileInput').addEventListener('change', function(e){
+    if(!requireAdmin()){ this.value=''; return; }
+    const file = e.target.files[0]; if(!file) return;
+    const status = $('expenseParseStatus'); status.className = 'parse-status'; status.textContent = 'Reading expense workbook…';
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true});
+        let headerRow=-1, dateCol=-1, opponentCol=-1, venueCol=-1, categoryHeaderRow=-1, categoryCols=[];
+        for(let i=0;i<Math.min(rows.length,120);i++){
+          const r=rows[i]||[], date=r.findIndex(v=>['date','dateandday','dayanddate'].includes(normHead(v))), opp=r.findIndex(v=>['vs','opponent','opposition'].includes(normHead(v)));
+          if(headerRow===-1 && date!==-1 && opp!==-1){ headerRow=i; dateCol=date; opponentCol=opp; venueCol=r.findIndex(v=>normHead(v)==='venue'); }
+          const here=[]; r.forEach((h,col)=>{const category=normalizeExpenseHead(h); if(category) here.push({col,category});});
+          if(here.length>categoryCols.length){categoryCols=here;categoryHeaderRow=i;}
+        }
+        if(headerRow===-1 && categoryHeaderRow!==-1){headerRow=categoryHeaderRow;dateCol=1;opponentCol=2;venueCol=3;}
+        if(headerRow===-1 || !categoryCols.length) throw new Error('Could not recognise the match-detail expense table.');
+        let importedMatches=0, importedExpenses=0;
+        for(let i=Math.max(headerRow,categoryHeaderRow)+1;i<rows.length;i++){
+          const r=rows[i]||[], date=toISODate(r[dateCol]), opponent=r[opponentCol]?String(r[opponentCol]).trim():'';
+          if(!date || !opponent || SKIP_VALUES.includes(opponent.toLowerCase())) continue;
+          const venue=venueCol!==-1 && r[venueCol]?String(r[venueCol]).trim():'';
+          if(venue && SKIP_VALUES.includes(venue.toLowerCase())) continue;
+          let match=state.matches.find(m=>matchKey(m)===date+'|'+opponentKey(opponent));
+          if(!match){match={date,opponent,venue,time:'',location:''};state.matches.push(match);importedMatches++;}
+          const items=categoryCols.map(({col,category})=>{const amount=Number(r[col]);return Number.isFinite(amount)&&amount!==0?{category,note:'',amount}:null;}).filter(Boolean);
+          if(items.length){state.expenses[matchKey(match)]=items;importedExpenses+=items.length;}
+        }
+        state.matches.sort((a,b)=>a.date.localeCompare(b.date));
+        if(!state.matches.length) throw new Error('No scheduled matches found in this workbook.');
+        saveMatches();saveExpenses();status.className='parse-status ok';status.textContent=`Imported ${importedExpenses} expense entries and ${importedMatches} new fixtures.`;state.month=new Date();render();
+      }catch(err){status.className='parse-status err';status.textContent='Could not import that workbook — '+err.message;}
+    }; reader.readAsArrayBuffer(file);
+  });
+
+  // ---------- contributions file parsing ----------
+  function monthKey(dateObj){ return dateObj.getFullYear()+'-'+String(dateObj.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(iso){ const [y,mo]=iso.split('-').map(Number); return new Date(y,mo-1,1).toLocaleDateString('en-US',{month:'short', year:'numeric'}); }
+  function contributionMonthISO(v){
+    if(v instanceof Date && !isNaN(v)) return monthKey(v);
+    if(typeof v === 'number'){
+      // Excel month headers in this workbook are modern serial dates (e.g. 45870 = Aug 2025).
+      // Ignore numeric calculations elsewhere in the header row.
+      if(v < 40000 || v > 60000) return null;
+      const d = new Date(Math.round((v-25569)*86400*1000));
+      return isNaN(d) ? null : monthKey(d);
+    }
+    if(typeof v === 'string'){
+      if(!/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s-]+\d{2,4}$/i.test(v.trim())) return null;
+      const d = new Date(v);
+      return isNaN(d) ? null : monthKey(d);
+    }
+    return null;
+  }
+  function ensureContribPlayer(name){
+    const key = name.trim().toLowerCase();
+    if(!state.contributions[key]) state.contributions[key] = { name: name.trim(), phone:'', months:{} };
+    return state.contributions[key];
+  }
+  function ensureMonth(player, iso){
+    if(!player.months[iso]) player.months[iso] = {expected:0, received:0};
+    return player.months[iso];
+  }
+
+  $('contribFileInput').addEventListener('change', function(e){
+    if(!requireAdmin()){ this.value=''; return; }
+    const file = e.target.files[0];
+    if(!file) return;
+    const status = $('contribParseStatus');
+    status.className = 'parse-status';
+    status.textContent = 'Reading file…';
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array', cellDates:true});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true});
+        if(!rows.length) throw new Error('Sheet looks empty.');
+
+        // Find every "Sr # / Player Name" header row. This workbook leaves a blank first column,
+        // so the headers may begin in any column.
+        const headerRows = [];
+        for(let i=0;i<rows.length;i++){
+          const r = rows[i] || [];
+          const srCol = r.findIndex(v => ['sr','srno'].includes(normHead(v)));
+          const nameCol = r.findIndex(v => normHead(v)==='playername');
+          if(srCol !== -1 && nameCol !== -1) headerRows.push({row:i, nameCol});
+        }
+        if(!headerRows.length) throw new Error('Could not find a "Sr # / Player Name" table in this file.');
+
+        // An uploaded workbook is the source of truth: do not blend it with values from an earlier import.
+        state.contributions = {};
+        let playersTouched = 0;
+        headerRows.forEach(({row:h, nameCol})=>{
+          const hdr = rows[h] || [];
+          // classify the block by scanning the few rows above for a title
+          let blockType = 'expected';
+          for(let b=h-1; b>=Math.max(0,h-4); b--){
+            const cells = (rows[b]||[]).filter(v=>typeof v==='string' && v.trim());
+            const titleCell = cells.find(v => /contribution/i.test(v) && !/^description$/i.test(v.trim()));
+            if(titleCell){
+              const t = titleCell.toLowerCase();
+              if(t.includes('pending') || t.includes('to be received')) blockType = 'pending';
+              else if(t.includes('received')) blockType = 'received';
+              else blockType = 'expected';
+              break;
+            }
+          }
+          // month columns are the ones holding an actual Date in the header row
+          const monthCols = [];
+          let monthRangeStarted = false;
+          for(let c=nameCol+1;c<hdr.length;c++){
+            const iso = contributionMonthISO(hdr[c]);
+            if(iso){
+              monthCols.push({c, iso});
+              monthRangeStarted = true;
+            } else if(monthRangeStarted) break;
+          }
+          if(!monthCols.length) return;
+          if(blockType === 'pending') return; // pending is derived (expected − received), not stored
+
+          for(let i=h+1;i<rows.length;i++){
+            const r = rows[i];
+            if(!r || r.every(v => v===null || v===undefined || v==='')) break;
+            const name = r[nameCol] ? String(r[nameCol]).trim() : '';
+            if(!name) continue;
+            const player = ensureContribPlayer(name);
+            monthCols.forEach(mc=>{
+              const val = r[mc.c];
+              if(typeof val === 'number'){
+                const mo = ensureMonth(player, mc.iso);
+                mo[blockType] = val;
+              }
+            });
+            playersTouched++;
+          }
+        });
+
+        if(!playersTouched) throw new Error('No player rows found under the expected headers.');
+        saveContributions();
+        status.className = 'parse-status ok';
+        status.textContent = `Loaded contributions for ${Object.keys(state.contributions).length} players.`;
+        render();
+      }catch(err){
+        status.className = 'parse-status err';
+        status.textContent = 'Could not read that file — ' + err.message;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function applyEditState(){
+    const selectors = [
+      '#fileInput','#expenseFileInput','#contribFileInput','#currencyInput','#newName','#newPhone','#newEmail','#addContactBtn',
+      '#expCategory','#expNote','#expAmount','#addExpenseBtn','#captainName','#captainPhone','#cpPhone','#cpAddMonthBtn',
+      '#markSentChk','.cm-exp','.cm-rec'
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(el=>{
+      el.disabled = !isAdmin;
+    });
+  }
+
+  function renderHome(){
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const upcoming = state.matches
+      .filter(m => { const d=new Date(m.date+'T00:00:00'); return !isNaN(d) && d >= today; })
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    const next = upcoming[0];
+    const nextValue = $('homeNextMatch');
+    const nextMeta = $('homeNextMatchMeta');
+    if(next){
+      const d=new Date(next.date+'T00:00:00');
+      const days=Math.max(0,Math.round((d-today)/86400000));
+      nextValue.textContent = `vs ${next.opponent || 'TBD'}`;
+      nextMeta.textContent = `${d.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'})} · ${next.venue || next.location || 'Venue TBD'}${days===0?' · Today':days===1?' · Tomorrow':` · In ${days} days`}`;
+    }else{
+      nextValue.textContent='No fixture yet';
+      nextMeta.textContent='Add fixtures from the Fixtures page';
+    }
+    let expenses=0;
+    Object.values(state.expenses).forEach(items=>{ if(Array.isArray(items)) items.forEach(i=>expenses+=Number(i.amount||0)); });
+    let expected=0, received=0;
+    Object.values(state.contributions).forEach(player=>{ const t=computeContribTotals(player); expected+=t.exp; received+=t.rec; });
+    const balance=received-expenses;
+    $('homeExpenseTotal').textContent=fmtMoney(expenses);
+    $('homeContributionTotal').textContent=fmtMoney(received);
+    $('homeContributionMeta').textContent=expected ? `${fmtMoney(Math.max(0,expected-received))} pending · ${fmtMoney(expected)} expected` : 'No expected amount recorded';
+    $('homeBalanceTotal').textContent=fmtMoney(Math.abs(balance));
+    $('homeBalanceLabel').textContent=balance>=0?'Available Balance':'Funding Shortfall';
+    $('homeBalanceMeta').textContent=balance>=0?'Contributions received minus expenses':`${fmtMoney(Math.abs(balance))} more needed to cover expenses`;
+  }
+
+  function render(){
+    applyEditState();
+    renderHome();
+    const has = state.matches.length > 0;
+    const byDate = fixturesView === 'date';
+    $('fixturesViewToggle').style.display = has ? 'flex' : 'none';
+    $('calSection').style.display = (has && byDate) ? 'block' : 'none';
+    $('upcomingSection').style.display = (has && byDate) ? 'block' : 'none';
+    $('teamWiseSection').style.display = (has && !byDate) ? 'block' : 'none';
+    $('emptyState').style.display = has ? 'none' : 'block';
+    $('expenseSection').style.display = has ? 'block' : 'none';
+    if(has){
+      $('matchCount').textContent = state.matches.length + (state.matches.length===1?' match':' matches');
+      renderCalendar();
+      renderUpcoming();
+      renderTeamWise();
+      renderDueBanner();
+      renderExpenseSection();
+    } else {
+      $('dueBanner').style.display = 'none';
+    }
+    renderContribSection();
+    renderContacts();
+    renderFinanceSection();
+  }
+
+  function fmtMoney(n){
+    const num = Number(n) || 0;
+    return `${state.currency} ${num.toLocaleString(undefined, {maximumFractionDigits:2})}`;
+  }
+
+  function renderExpenseSection(){
+    let total = 0, count = 0;
+    const rows = [];
+    state.matches.forEach(m=>{
+      const items = state.expenses[matchKey(m)] || [];
+      if(!items.length) return;
+      const sub = items.reduce((s,i)=> s + Number(i.amount||0), 0);
+      total += sub; count += items.length;
+      rows.push({m, sub});
+    });
+    $('seasonExpenseTotal').textContent = fmtMoney(total);
+    $('expenseCount').textContent = count + (count===1 ? ' entry' : ' entries');
+    const list = $('expenseByMatchList');
+    if(!rows.length){
+      list.innerHTML = '<div class="hint">No expenses logged yet — open a match and add one.</div>';
+      return;
+    }
+    rows.sort((a,b)=> b.m.date.localeCompare(a.m.date));
+    list.innerHTML = '';
+    rows.forEach(({m, sub})=>{
+      const dt = new Date(m.date+'T00:00:00');
+      const row = document.createElement('div');
+      row.className = 'expense-match-row';
+      row.innerHTML = `
+        <div class="em-info"><b>vs ${escapeHtml(m.opponent)}</b><span>${dt.toLocaleDateString('en-US',{day:'numeric', month:'short', year:'numeric'})}</span></div>
+        <div class="em-amt">${fmtMoney(sub)}</div>`;
+      row.addEventListener('click', ()=> openMatch(m));
+      list.appendChild(row);
+    });
+  }
+
+  function renderFinanceSection(){
+    const expenses = Object.values(state.expenses).flat().reduce((sum, item)=>sum + Number(item.amount || 0), 0);
+    let expected = 0, received = 0;
+    Object.values(state.contributions).forEach(player=>{
+      const totals = computeContribTotals(player);
+      expected += totals.exp;
+      received += totals.rec;
+    });
+    const balance = received - expenses;
+    const hasData = expenses > 0 || expected > 0 || received > 0;
+    $('financeSection').style.display = hasData ? 'block' : 'none';
+    if(!hasData) return;
+    $('financeGrid').innerHTML = `
+      <div class="finance-card funds"><div class="fc-label">Funds collected</div><div class="fc-amt">${fmtMoney(received)}</div></div>
+      <div class="finance-card expenses"><div class="fc-label">Expenses incurred</div><div class="fc-amt">${fmtMoney(expenses)}</div></div>
+      <div class="finance-card balance ${balance>=0?'positive':'negative'}"><div class="fc-label">${balance>=0?'Available balance':'Funding shortfall'}</div><div class="fc-amt">${fmtMoney(Math.abs(balance))}</div></div>`;
+    const pending = Math.max(0, expected - received);
+    $('financeNote').textContent = pending
+      ? `Funds still to be collected: ${fmtMoney(pending)}. ${balance>=0 ? 'Collected funds cover the recorded expenses.' : 'More funds need to be collected to cover recorded expenses.'}`
+      : (balance>=0 ? 'All expected funds have been collected and cover the recorded expenses.' : 'All expected funds are collected, but recorded expenses exceed them.');
+  }
+
+  // ---------- contributions ----------
+  let activeContribPlayer = null;
+
+  function computeContribTotals(p){
+    let exp=0, rec=0;
+    Object.values(p.months).forEach(mo=>{ exp += Number(mo.expected||0); rec += Number(mo.received||0); });
+    return { exp, rec, pending: exp - rec };
+  }
+
+  function renderContribSection(){
+    const players = Object.values(state.contributions);
+    $('contribCount').textContent = players.length + (players.length===1 ? ' player' : ' players');
+    let totalExp=0, totalRec=0;
+    players.forEach(p=>{ const t = computeContribTotals(p); totalExp += t.exp; totalRec += t.rec; });
+    $('contribStats').innerHTML = `
+      <div class="cs-card expected"><div class="cs-label">Expected</div><div class="cs-amt">${fmtMoney(totalExp)}</div></div>
+      <div class="cs-card received"><div class="cs-label">Received</div><div class="cs-amt">${fmtMoney(totalRec)}</div></div>
+      <div class="cs-card pending"><div class="cs-label">Pending</div><div class="cs-amt">${fmtMoney(totalExp-totalRec)}</div></div>`;
+    const list = $('contribList');
+    if(!players.length){
+      list.innerHTML = '<div class="hint">Upload your contributions file to get started, or add a player as expenses come in.</div>';
+      return;
+    }
+    const sorted = players.slice().sort((a,b)=> computeContribTotals(b).pending - computeContribTotals(a).pending);
+    list.innerHTML = '';
+    sorted.forEach(p=>{
+      const t = computeContribTotals(p);
+      const row = document.createElement('div');
+      row.className = 'contrib-row';
+      row.innerHTML = `
+        <div class="cr-info"><b>${escapeHtml(p.name)}</b><span>Received ${fmtMoney(t.rec)} of ${fmtMoney(t.exp)}</span></div>
+        <div class="cr-pending ${t.pending<=0?'zero':'due'}">${t.pending<=0 ? 'Paid up' : fmtMoney(t.pending)}</div>`;
+      row.addEventListener('click', ()=> openContribPlayer(p));
+      list.appendChild(row);
+    });
+  }
+
+  function contribMessageText(p, t){
+    if(t.pending <= 0) return `Hi ${p.name}, you're all paid up for this season's contribution. Thanks for staying on top of it! 🙌`;
+    return `Hi ${p.name}, a quick reminder — your pending contribution for this season is ${fmtMoney(t.pending)}. Please clear it whenever convenient. Thanks!`;
+  }
+
+  function openContribPlayer(p){
+    activeContribPlayer = p;
+    $('cpName').textContent = p.name;
+    refreshContribHeader(p);
+    renderMonthTable(p);
+    $('cpPhone').value = p.phone || '';
+    $('contribOverlay').classList.add('show');
+  }
+  function refreshContribHeader(p){
+    const t = computeContribTotals(p);
+    $('cpTotals').textContent = `Received ${fmtMoney(t.rec)} of ${fmtMoney(t.exp)} · Pending ${fmtMoney(t.pending)}`;
+    $('cpMsg').value = contribMessageText(p, t);
+  }
+
+  function renderMonthTable(p){
+    const box = $('cpMonthTable');
+    box.innerHTML = '<div class="cp-header-row"><span>Month</span><span>Expected</span><span>Received</span><span>Pending</span></div>';
+    Object.keys(p.months).sort().forEach(iso=>{
+      const mo = p.months[iso];
+      const pend = Number(mo.expected||0) - Number(mo.received||0);
+      const row = document.createElement('div');
+      row.className = 'cp-month-row';
+      row.innerHTML = `
+        <div class="cm-label">${monthLabel(iso)}</div>
+        <input type="number" class="cm-exp" value="${mo.expected||0}">
+        <input type="number" class="cm-rec" value="${mo.received||0}">
+        <div class="cm-pending ${pend<=0?'zero':'due'}">${fmtMoney(pend)}</div>`;
+      row.querySelector('.cm-exp').addEventListener('change', function(){
+        if(!requireAdmin()){ this.value=mo.expected||0; return; }
+        mo.expected = parseFloat(this.value) || 0;
+        saveContributions(); renderMonthTable(p); refreshContribHeader(p); renderContribSection(); renderFinanceSection();
+      });
+      row.querySelector('.cm-rec').addEventListener('change', function(){
+        if(!requireAdmin()){ this.value=mo.received||0; return; }
+        mo.received = parseFloat(this.value) || 0;
+        saveContributions(); renderMonthTable(p); refreshContribHeader(p); renderContribSection(); renderFinanceSection();
+      });
+      box.appendChild(row);
+    });
+    const addRow = document.createElement('div');
+    addRow.className = 'cp-month-row cp-add-row';
+    addRow.innerHTML = `
+      <input type="month" id="cpNewMonth">
+      <input type="number" id="cpNewExpected" placeholder="Expected">
+      <button class="icon-btn" id="cpAddMonthBtn">+ Add</button>`;
+    box.appendChild(addRow);
+    $('cpAddMonthBtn').addEventListener('click', ()=>{
+      if(!requireAdmin()) return;
+      const mval = $('cpNewMonth').value;
+      const amt = parseFloat($('cpNewExpected').value);
+      if(!mval || isNaN(amt)) return;
+      const mo = ensureMonth(p, mval);
+      mo.expected = amt;
+      saveContributions();
+      renderMonthTable(p); refreshContribHeader(p); renderContribSection(); renderFinanceSection();
+    });
+  }
+
+  $('closeContribSheet').addEventListener('click', ()=> $('contribOverlay').classList.remove('show'));
+  $('contribOverlay').addEventListener('click', (e)=>{ if(e.target.id==='contribOverlay') $('contribOverlay').classList.remove('show'); });
+
+  $('cpCopyBtn').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText($('cpMsg').value);
+      $('cpCopyBtn').textContent = 'Copied ✓';
+      setTimeout(()=> $('cpCopyBtn').textContent = 'Copy message', 1500);
+    }catch(e){}
+  });
+
+  $('cpSendBtn').addEventListener('click', ()=>{
+    if(!requireAdmin()) return;
+    const phoneRaw = $('cpPhone').value.trim();
+    if(!phoneRaw){ $('cpPhone').focus(); return; }
+    activeContribPlayer.phone = phoneRaw;
+    saveContributions();
+    const phone = phoneRaw.replace(/[^\d]/g,'');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent($('cpMsg').value)}`;
+    window.open(url, '_blank');
+  });
+
+  $('currencyInput').addEventListener('change', function(){
+    if(!requireAdmin()){ this.value=state.currency; return; }
+    state.currency = this.value.trim() || 'Rs';
+    this.value = state.currency;
+    saveCurrency();
+    renderExpenseSection();
+    renderFinanceSection();
+    if(activeMatch) renderExpenseItems(activeMatch);
+  });
+
+  function renderExpenseItems(m){
+    const key = matchKey(m);
+    const items = state.expenses[key] || [];
+    const box = $('expenseItems');
+    if(!items.length){
+      box.innerHTML = '<div class="hint">No expenses logged for this match yet.</div>';
+    } else {
+      box.innerHTML = '';
+      items.forEach((it, idx)=>{
+        const row = document.createElement('div');
+        row.className = 'expense-item-row';
+        row.innerHTML = `<div class="ei-desc">${expenseLabel(it)}</div><div class="ei-amt">${fmtMoney(it.amount)}</div><button class="ei-del">✕</button>`;
+        row.querySelector('.ei-del').addEventListener('click', ()=>{
+          if(!requireAdmin()) return;
+          items.splice(idx,1);
+          saveExpenses();
+          renderExpenseItems(m);
+          renderExpenseSection();
+          renderFinanceSection();
+        });
+        box.appendChild(row);
+      });
+    }
+    const sub = items.reduce((s,i)=> s + Number(i.amount||0), 0);
+    $('matchExpenseTotal').innerHTML = `Match total: <span>${fmtMoney(sub)}</span>`;
+  }
+
+  $('addExpenseBtn').addEventListener('click', ()=>{
+    if(!requireAdmin()) return;
+    if(!activeMatch) return;
+    const category = $('expCategory').value;
+    const note = $('expNote').value.trim();
+    const amount = parseFloat($('expAmount').value);
+    if(!category || isNaN(amount) || amount <= 0) return;
+    const key = matchKey(activeMatch);
+    if(!state.expenses[key]) state.expenses[key] = [];
+    state.expenses[key].push({category, note, amount});
+    saveExpenses();
+    $('expNote').value=''; $('expAmount').value='';
+    renderExpenseItems(activeMatch);
+    renderExpenseSection();
+    renderFinanceSection();
+  });
+
+  function renderDueBanner(){
+    const todayISO = new Date().toISOString().slice(0,10);
+    const due = state.matches.filter(m=>{
+      if(m.date < todayISO) return false;
+      const du = daysUntil(m.date);
+      if(du !== 5) return false;
+      return !(state.remindersSent[matchKey(m)]);
+    });
+    const box = $('dueBanner');
+    if(!due.length){ box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = `<div class="due-banner">
+      <div class="dh">🔔 Reminder due — 5 days out</div>
+      ${due.map(m=>{
+        const dt = new Date(m.date+'T00:00:00');
+        return `<div class="due-item"><div class="di"><b>vs ${escapeHtml(m.opponent)}</b>${dt.toLocaleDateString('en-US',{weekday:'short', day:'numeric', month:'short'})}</div><button data-key="${matchKey(m)}">Send now</button></div>`;
+      }).join('')}
+      <div class="note">Match Day can't send WhatsApp messages in the background on its own — no webpage can, since WhatsApp has no API for that without an approved WhatsApp Business account and a server running around the clock. This banner is the practical version: it watches the dates for you and surfaces exactly who's due, so all that's left is one tap.</div>
+    </div>`;
+    box.querySelectorAll('button[data-key]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const m = due.find(x => matchKey(x) === btn.dataset.key);
+        if(m) openMatch(m);
+      });
+    });
+  }
+
+  function matchesByDate(){
+    const map = {};
+    state.matches.forEach(m => { map[m.date] = m; });
+    return map;
+  }
+
+  function renderCalendar(){
+    const map = matchesByDate();
+    const y = state.month.getFullYear(), mo = state.month.getMonth();
+    $('monthLabel').textContent = state.month.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+    const grid = $('calGrid');
+    grid.innerHTML = '';
+    ['S','M','T','W','T','F','S'].forEach(d=>{
+      const el = document.createElement('div'); el.className='cal-dow'; el.textContent=d; grid.appendChild(el);
+    });
+    const first = new Date(y, mo, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(y, mo+1, 0).getDate();
+    const todayISO = new Date().toISOString().slice(0,10);
+
+    for(let i=0;i<startDow;i++){
+      const el = document.createElement('div'); el.className='cal-cell blank'; grid.appendChild(el);
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const dateObj = new Date(y, mo, d);
+      const iso = dateObj.toISOString().slice(0,10);
+      const dow = dateObj.getDay();
+      const isWeekend = dow===0 || dow===6;
+      const match = map[iso];
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' + (isWeekend?' weekend':'') + (match?' match':(isWeekend?' off':'')) + (iso===todayISO?' today':'');
+      const dEl = document.createElement('div'); dEl.className='d'; dEl.textContent=d;
+      cell.appendChild(dEl);
+      if(match){
+        const t = document.createElement('div'); t.className='tag'; t.textContent = match.opponent;
+        cell.appendChild(t);
+        cell.addEventListener('click', ()=> openMatch(match));
+      }
+      grid.appendChild(cell);
+    }
+  }
+
+  $('prevMonth').addEventListener('click', ()=>{ state.month = new Date(state.month.getFullYear(), state.month.getMonth()-1, 1); renderCalendar(); });
+  $('nextMonth').addEventListener('click', ()=>{ state.month = new Date(state.month.getFullYear(), state.month.getMonth()+1, 1); renderCalendar(); });
+
+  document.querySelectorAll('.filter-row button').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.filter-row button').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');
+      filterDays = this.dataset.f === 'all' ? 'all' : parseInt(this.dataset.f);
+      renderUpcoming();
+    });
+  });
+  document.querySelectorAll('.view-toggle button').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.view-toggle button').forEach(b=>b.classList.remove('active'));
+      this.classList.add('active');
+      fixturesView = this.dataset.view;
+      render();
+    });
+  });
+
+  function daysUntil(iso){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(iso+'T00:00:00');
+    return Math.round((d-today)/86400000);
+  }
+
+  function renderUpcoming(){
+    const list = $('upcomingList');
+    list.innerHTML = '';
+    const todayISO = new Date().toISOString().slice(0,10);
+    let upcoming = state.matches.filter(m => m.date >= todayISO);
+    if(filterDays !== 'all') upcoming = upcoming.filter(m => daysUntil(m.date) <= filterDays);
+    if(!upcoming.length){
+      list.innerHTML = '<div class="empty">No matches in this window.</div>';
+      return;
+    }
+    upcoming.forEach(m=>{
+      const dt = new Date(m.date+'T00:00:00');
+      const item = document.createElement('div');
+      item.className = 'match-item';
+      const du = daysUntil(m.date);
+      const cd = du===0 ? 'Today' : du===1 ? 'Tomorrow' : `In ${du} days`;
+      item.innerHTML = `
+        <div class="dbox"><div class="dd">${dt.getDate()}</div><div class="mm">${dt.toLocaleDateString('en-US',{month:'short'})}</div></div>
+        <div class="info">
+          <div class="vs">vs ${escapeHtml(m.opponent)}</div>
+          <div class="meta">${[m.venue, m.time, m.location].filter(Boolean).join(' · ') || 'Details TBC'}</div>
+          <div class="countdown">${cd.toUpperCase()}</div>
+        </div>
+        <div class="actions">
+          <button class="icon-btn">Details</button>
+        </div>`;
+      item.querySelector('.icon-btn').addEventListener('click', ()=> openMatch(m));
+      list.appendChild(item);
+    });
+  }
+
+  function renderTeamWise(){
+    const box = $('teamWiseList');
+    box.innerHTML = '';
+    const groups = new Map();
+    state.matches.forEach(m=>{
+      const name = String(m.opponent || 'Opponent TBD').trim();
+      const gk = opponentKey(name);
+      if(!groups.has(gk)) groups.set(gk, {name, matches:[]});
+      groups.get(gk).matches.push(m);
+    });
+    const ordered = [...groups.values()].sort((a,b)=> a.name.localeCompare(b.name));
+    $('teamWiseCount').textContent = ordered.length + (ordered.length===1 ? ' team' : ' teams');
+    if(!ordered.length){
+      box.innerHTML = '<div class="empty">No fixtures loaded yet.</div>';
+      return;
+    }
+    const todayISO = new Date().toISOString().slice(0,10);
+    ordered.forEach(group=>{
+      group.matches.sort((a,b)=> a.date.localeCompare(b.date));
+      const upcomingCount = group.matches.filter(m=>m.date>=todayISO).length;
+      const card = document.createElement('div');
+      card.className = 'team-group';
+      card.innerHTML = `
+        <div class="team-group-head">
+          <h3>${escapeHtml(group.name)}</h3>
+          <span>${group.matches.length} ${group.matches.length===1?'match':'matches'}${upcomingCount ? ` \u00b7 ${upcomingCount} upcoming` : ''}</span>
+        </div>
+        <div class="team-group-list"></div>`;
+      const list = card.querySelector('.team-group-list');
+      group.matches.forEach(m=>{
+        const dt = new Date(m.date+'T00:00:00');
+        const row = document.createElement('div');
+        row.className = 'team-match-row' + (m.date < todayISO ? ' past' : '');
+        row.innerHTML = `
+          <div class="tm-date">${dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div>
+          <div class="tm-meta">${escapeHtml([m.venue, m.time, m.location].filter(Boolean).join(' \u00b7 ') || 'Details TBC')}</div>`;
+        row.addEventListener('click', ()=> openMatch(m));
+        list.appendChild(row);
+      });
+      box.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function teamMessageText(m){
+    const dt = new Date(m.date+'T00:00:00');
+    const dayStr = dt.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
+    let msg = `🏏 Match reminder: We play *${m.opponent}* on ${dayStr}`;
+    if(m.time) msg += ` at ${m.time}`;
+    if(m.venue) msg += ` (${m.venue})`;
+    if(m.location) msg += `\nGround: ${m.location}`;
+    msg += `\nPlease be on time — let's go! 🔥`;
+    return msg;
+  }
+
+  function captainMessageText(m){
+    const dt = new Date(m.date+'T00:00:00');
+    const dayStr = dt.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
+    let msg = `Hi, this is from ECP Spartans. Just confirming our match vs ${m.opponent} on ${dayStr}`;
+    if(m.time) msg += ` at ${m.time}`;
+    if(m.venue) msg += `, at ${m.venue}`;
+    msg += `.\nLooking forward to a good game — let us know if anything changes on your end. 🏏`;
+    return msg;
+  }
+
+  function opponentKey(opponent){ return String(opponent||'').trim().toLowerCase(); }
+  function matchKey(m){ return m.date + '|' + opponentKey(m.opponent); }
+
+  function availabilityMessageText(m){
+    const dt = new Date(m.date+'T00:00:00');
+    const dayStr = dt.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
+    let msg = `✅ Availability check: are you available for our match vs *${m.opponent}* on ${dayStr}`;
+    if(m.time) msg += ` at ${m.time}`;
+    if(m.venue) msg += ` (${m.venue})`;
+    msg += `?\nPlease reply YES or NO so I can finalize the playing XI.`;
+    return msg;
+  }
+
+  function pollQuestionText(m){
+    const dt = new Date(m.date+'T00:00:00');
+    const dayStr = dt.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long'});
+    return `Available for the match vs ${m.opponent} on ${dayStr}${m.time ? ' at '+m.time : ''}?`;
+  }
+
+  async function openMatch(m){
+    activeMatch = m;
+    const dt = new Date(m.date+'T00:00:00');
+    $('mTitle').textContent = 'vs ' + m.opponent;
+    $('mWhen').textContent = dt.toLocaleDateString('en-US',{weekday:'long', day:'numeric', month:'long', year:'numeric'}) + (m.time ? ' · ' + m.time : '');
+    $('mVenue').textContent = m.venue || '—';
+    $('mLoc').textContent = m.location || '—';
+
+    $('mTeamMsg').value = teamMessageText(m);
+    $('mCaptainMsg').value = captainMessageText(m);
+    $('mAvailMsg').value = availabilityMessageText(m);
+    $('pollQuestion').value = pollQuestionText(m);
+    $('pollOpt1').value = '✅ Yes, available';
+    $('pollOpt2').value = '❌ No, can\'t make it';
+
+    const saved = state.captainContacts[opponentKey(m.opponent)];
+    $('captainName').value = saved ? saved.name : '';
+    $('captainPhone').value = saved ? saved.phone : '';
+    $('captainSavedHint').textContent = saved ? `Saved for ${m.opponent} — remembered next time too.` : 'Add their number once and it\'s remembered for this opponent.';
+
+    renderSendListTeam(m);
+    renderSendListAvail(m);
+    $('availRoster').innerHTML = '<div class="hint">Loading responses…</div>';
+    $('availSummary').textContent = '';
+    $('markSentChk').checked = !!state.remindersSent[matchKey(m)];
+    renderExpenseItems(m);
+    $('overlay').classList.add('show');
+    await fetchAvailability(matchKey(m));
+    renderAvailRoster(m);
+  }
+  $('closeSheet').addEventListener('click', ()=> $('overlay').classList.remove('show'));
+  $('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') $('overlay').classList.remove('show'); });
+
+  $('markSentChk').addEventListener('change', function(){
+    if(!requireAdmin()){ this.checked = !!state.remindersSent[matchKey(activeMatch)]; return; }
+    if(!activeMatch) return;
+    if(this.checked) state.remindersSent[matchKey(activeMatch)] = true;
+    else delete state.remindersSent[matchKey(activeMatch)];
+    saveRemindersSent();
+    renderDueBanner();
+  });
+
+  $('copyTeamBtn').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText($('mTeamMsg').value);
+      $('copyTeamBtn').textContent = 'Copied ✓';
+      setTimeout(()=> $('copyTeamBtn').textContent='Copy message', 1500);
+    }catch(e){}
+  });
+
+  $('copyCaptainBtn').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText($('mCaptainMsg').value);
+      $('copyCaptainBtn').textContent = 'Copied ✓';
+      setTimeout(()=> $('copyCaptainBtn').textContent='Copy message', 1500);
+    }catch(e){}
+  });
+
+  $('copyAvailBtn').addEventListener('click', async ()=>{
+    try{
+      await navigator.clipboard.writeText($('mAvailMsg').value);
+      $('copyAvailBtn').textContent = 'Copied ✓';
+      setTimeout(()=> $('copyAvailBtn').textContent='Copy message', 1500);
+    }catch(e){}
+  });
+
+  function wireCopyField(btnId, inputId){
+    $(btnId).addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText($(inputId).value);
+        const orig = $(btnId).textContent;
+        $(btnId).textContent = 'Copied ✓';
+        setTimeout(()=> $(btnId).textContent = orig, 1300);
+      }catch(e){}
+    });
+  }
+  wireCopyField('copyPollQBtn', 'pollQuestion');
+  wireCopyField('copyPollO1Btn', 'pollOpt1');
+  wireCopyField('copyPollO2Btn', 'pollOpt2');
+
+  $('sendCaptainBtn').addEventListener('click', async ()=>{
+    if(!requireAdmin()) return;
+    const phoneRaw = $('captainPhone').value.trim();
+    if(!phoneRaw){ $('captainPhone').focus(); return; }
+    const name = $('captainName').value.trim();
+    state.captainContacts[opponentKey(activeMatch.opponent)] = {name, phone: phoneRaw};
+    await saveCaptainContacts();
+    $('captainSavedHint').textContent = `Saved for ${activeMatch.opponent} — remembered next time too.`;
+    const phone = phoneRaw.replace(/[^\d]/g,'');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent($('mCaptainMsg').value)}`;
+    window.open(url, '_blank');
+  });
+
+  function renderSendListTeam(m){
+    const box = $('sendListTeam');
+    box.innerHTML = '';
+    if(!state.contacts.length){
+      box.innerHTML = '<div class="hint">Add players to your Team Sheet to send WhatsApp reminders directly.</div>';
+      return;
+    }
+    state.contacts.forEach(c=>{
+      const btn = document.createElement('button');
+      btn.className = 'icon-btn wa';
+      btn.innerHTML = `<span>Send to ${escapeHtml(c.name)}</span><span>WhatsApp ↗</span>`;
+      btn.addEventListener('click', ()=>{
+        const phone = c.phone.replace(/[^\d]/g,'');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent($('mTeamMsg').value)}`;
+        window.open(url, '_blank');
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  function renderSendListAvail(m){
+    const box = $('sendListAvail');
+    box.innerHTML = '';
+    if(!state.contacts.length){
+      box.innerHTML = '<div class="hint">Add players to your Team Sheet to ask for availability directly.</div>';
+      return;
+    }
+    state.contacts.forEach(c=>{
+      const btn = document.createElement('button');
+      btn.className = 'icon-btn wa';
+      btn.innerHTML = `<span>Ask ${escapeHtml(c.name)}</span><span>WhatsApp ↗</span>`;
+      btn.addEventListener('click', ()=>{
+        const phone = c.phone.replace(/[^\d]/g,'');
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent($('mAvailMsg').value)}`;
+        window.open(url, '_blank');
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  function renderAvailRoster(m){
+    const key = matchKey(m);
+    const rec = availabilityCache[key] || (availabilityCache[key] = {});
+    const roster = $('availRoster');
+    roster.innerHTML = '';
+
+    if(!state.contacts.length){
+      roster.innerHTML = '<div class="hint">Add players to your Team Sheet to track their responses here.</div>';
+      $('availSummary').textContent = '';
+      return;
+    }
+
+    state.contacts.forEach(c=>{
+      const status = rec[c.name] || 'pending';
+      const mine = isPlayer && currentPlayerContact && currentPlayerContact.name === c.name;
+      const canEdit = isAdmin || mine;
+      const row = document.createElement('div');
+      row.className = 'avail-row';
+      row.innerHTML = `
+        <div class="nm">${escapeHtml(c.name)}${mine ? ' <span style="color:var(--gold);font-size:10.5px;">(you)</span>' : ''}</div>
+        <div class="avail-pill">
+          <button class="yes ${status==='yes'?'active':''}" data-v="yes"${canEdit?'':' disabled'}>Yes</button>
+          <button class="no ${status==='no'?'active':''}" data-v="no"${canEdit?'':' disabled'}>No</button>
+          <button class="pending ${status==='pending'?'active':''}" data-v="pending"${canEdit?'':' disabled'}>?</button>
+        </div>`;
+      if(canEdit){
+        row.querySelectorAll('.avail-pill button').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            row.querySelectorAll('.avail-pill button').forEach(b=>b.disabled=true);
+            try{
+              await submitAvailability(key, c.name, mine ? (currentUser.email||'') : (c.email||''), btn.dataset.v);
+              rec[c.name] = btn.dataset.v;
+            }catch(e){
+              setAuthStatus('Could not save availability: ' + (e.message || 'please try again'), 'err');
+            }
+            renderAvailRoster(m);
+          });
+        });
+      }
+      roster.appendChild(row);
+    });
+
+    const available = state.contacts.filter(c => rec[c.name] === 'yes').map(c => c.name);
+    const notAvailable = state.contacts.filter(c => rec[c.name] === 'no').length;
+    const pending = state.contacts.filter(c => !rec[c.name] || rec[c.name] === 'pending').length;
+
+    $('availSummary').innerHTML = available.length
+      ? `<b>Available (${available.length}):</b> ${escapeHtml(available.join(', '))}${notAvailable||pending ? `<br><span style="color:var(--chalk-dim)">Not available: ${notAvailable} · Awaiting reply: ${pending}</span>` : ''}`
+      : `No one marked available yet. <span style="color:var(--chalk-dim)">Awaiting reply: ${pending} · Not available: ${notAvailable}</span>`;
+  }
+
+  // ---------- contacts ----------
+  function renderContacts(){
+    const list = $('contactList');
+    list.innerHTML = '';
+    $('contactCount').textContent = state.contacts.length + (state.contacts.length===1?' contact':' contacts');
+    if(!state.contacts.length){
+      list.innerHTML = '<div class="hint">No players added yet.</div>';
+      return;
+    }
+    state.contacts.forEach((c, idx)=>{
+      const row = document.createElement('div');
+      row.className = 'contact-row';
+      row.innerHTML = `<div class="who"><b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.phone)}${c.email ? ' · '+escapeHtml(c.email) : ''}</span></div><button class="del">✕</button>`;
+      row.querySelector('.del').addEventListener('click', ()=>{
+        if(!requireAdmin()) return;
+        state.contacts.splice(idx,1);
+        saveContacts();
+        renderContacts();
+      });
+      list.appendChild(row);
+    });
+  }
+  $('addContactBtn').addEventListener('click', ()=>{
+    if(!requireAdmin()) return;
+    const name = $('newName').value.trim();
+    const phone = $('newPhone').value.trim();
+    const email = $('newEmail').value.trim().toLowerCase();
+    if(!name || !phone) return;
+    state.contacts.push({name, phone, email});
+    saveContacts();
+    $('newName').value=''; $('newPhone').value=''; $('newEmail').value='';
+    renderContacts();
+  });
+
+  // ---------- season summary export ----------
+  async function getRaw(key){
+    try{
+      const r = await persist.get(key, false);
+      if(!r) return null;
+      return typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
+    }catch(e){ return null; }
+  }
+  function fixtureResultKey(m){ return m.date + '|' + String(m.opponent||'').trim().toLowerCase(); }
+  function statPlayerKey(n){ return String(n||'').trim().toLowerCase(); }
+  function numberSafe(v){ return Math.max(0, Number(v) || 0); }
+
+  async function generateSeasonSummaryPdf(){
+    if(!window.jspdf || !window.jspdf.jsPDF){ alert('The PDF tool is still loading. Please try again in a moment.'); return; }
+    const btn = $('seasonSummaryBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Building report…';
+    try{
+      const [matchResultsRaw, matchStatsRaw] = await Promise.all([getRaw('matchResults'), getRaw('matchStats')]);
+      const matchResults = matchResultsRaw || {};
+      const matchStats = Array.isArray(matchStatsRaw) ? matchStatsRaw : [];
+
+      // match record
+      const completedStatuses = ['Won','Lost','Tie','No result'];
+      let won=0, lost=0, tie=0, noResult=0;
+      state.matches.forEach(m=>{
+        const r = matchResults[fixtureResultKey(m)];
+        if(r && completedStatuses.includes(r.status)){
+          if(r.status==='Won') won++;
+          else if(r.status==='Lost') lost++;
+          else if(r.status==='Tie') tie++;
+          else if(r.status==='No result') noResult++;
+        }
+      });
+      const completed = won+lost+tie+noResult;
+      const decided = won+lost;
+      const winPct = decided ? (won/decided*100) : 0;
+
+      // finances
+      let expenses=0;
+      Object.values(state.expenses).forEach(items=>{ if(Array.isArray(items)) items.forEach(i=>expenses+=numberSafe(i.amount)); });
+      let expected=0, received=0;
+      Object.values(state.contributions).forEach(player=>{ const t=computeContribTotals(player); expected+=t.exp; received+=t.rec; });
+      const balance = received - expenses;
+
+      // top performers, from recorded match-by-match performances
+      const nameMap = new Map();
+      matchStats.forEach(item=>{ if(item.player) nameMap.set(statPlayerKey(item.player), item.player); });
+      const perfNames = [...nameMap.values()];
+      function seasonPerf(name){
+        const entries = matchStats.filter(item=>statPlayerKey(item.player)===statPlayerKey(name));
+        return {
+          name,
+          runs: entries.reduce((s,i)=>s+numberSafe(i.runs),0),
+          wickets: entries.reduce((s,i)=>s+numberSafe(i.wickets),0)
+        };
+      }
+      const topScorers = perfNames.map(seasonPerf).sort((a,b)=>b.runs-a.runs).filter(p=>p.runs>0).slice(0,5);
+      const topWicketTakers = perfNames.map(seasonPerf).sort((a,b)=>b.wickets-a.wickets).filter(p=>p.wickets>0).slice(0,5);
+
+      // pending contributions
+      const pendingPlayers = Object.values(state.contributions)
+        .map(p=>({name:p.name, pending: computeContribTotals(p).pending}))
+        .filter(p=>p.pending>0)
+        .sort((a,b)=>b.pending-a.pending);
+
+      // upcoming fixtures
+      const today = new Date(); today.setHours(0,0,0,0);
+      const upcoming = state.matches
+        .filter(m=>{ const d=new Date(m.date+'T00:00:00'); return !isNaN(d) && d>=today; })
+        .sort((a,b)=>a.date.localeCompare(b.date))
+        .slice(0,6);
+
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF({unit:'mm', format:'a4'});
+      const todayISOStr = new Date().toISOString().slice(0,10);
+      let y = 0;
+      const pageHeader = (title, subtitle)=>{
+        doc.setFillColor(15,32,25); doc.rect(0,0,210,297,'F');
+        doc.setTextColor(201,162,39); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+        doc.text('ECP SPARTANS',15,16);
+        doc.setTextColor(241,238,226); doc.setFontSize(19); doc.text(title,15,27);
+        doc.setTextColor(201,196,178); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text(subtitle,15,34);
+        y = 45;
+      };
+      const ensureRoom = (needed)=>{ if(y + needed > 280){ doc.addPage(); pageHeader('Season Summary','Generated '+todayISOStr); } };
+      const sectionTitle = (t)=>{
+        ensureRoom(16);
+        doc.setTextColor(201,162,39); doc.setFont('helvetica','bold'); doc.setFontSize(12.5);
+        doc.text(t.toUpperCase(),15,y); y += 3;
+        doc.setDrawColor(73,95,81); doc.line(15,y,195,y); y += 8;
+      };
+      const dataRow = (label, value)=>{
+        ensureRoom(8);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(201,196,178);
+        doc.text(String(label),15,y);
+        doc.setFont('helvetica','bold'); doc.setTextColor(241,238,226);
+        doc.text(String(value),195,y,{align:'right'});
+        doc.setDrawColor(60,75,66); doc.line(15,y+2,195,y+2);
+        y += 8;
+      };
+      const emptyNote = (text)=>{
+        ensureRoom(8);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(201,196,178);
+        doc.text(text,15,y); y += 8;
+      };
+
+      pageHeader('Season Summary', 'Generated '+todayISOStr+'  |  '+state.matches.length+' fixtures on record');
+
+      sectionTitle('Match Record');
+      dataRow('Matches completed', completed);
+      dataRow('Won', won);
+      dataRow('Lost', lost);
+      dataRow('Tied', tie);
+      dataRow('No result', noResult);
+      dataRow('Win percentage', decided ? winPct.toFixed(1)+'%' : '—');
+      y += 4;
+
+      sectionTitle('Financial Position');
+      dataRow('Contributions received', fmtMoney(received));
+      dataRow('Contributions expected', fmtMoney(expected));
+      dataRow('Expenses incurred', fmtMoney(expenses));
+      dataRow(balance>=0 ? 'Available balance' : 'Funding shortfall', fmtMoney(Math.abs(balance)));
+      y += 4;
+
+      sectionTitle('Top Run Scorers');
+      if(topScorers.length) topScorers.forEach((p,i)=> dataRow((i+1)+'. '+p.name, p.runs+' runs'));
+      else emptyNote('No match performances recorded yet — add these on the Player Stats page.');
+      y += 4;
+
+      sectionTitle('Top Wicket Takers');
+      if(topWicketTakers.length) topWicketTakers.forEach((p,i)=> dataRow((i+1)+'. '+p.name, p.wickets+' wkts'));
+      else emptyNote('No bowling performances recorded yet — add these on the Player Stats page.');
+      y += 4;
+
+      sectionTitle('Pending Contributions');
+      if(pendingPlayers.length) pendingPlayers.forEach(p=> dataRow(p.name, fmtMoney(p.pending)));
+      else emptyNote('Everyone is paid up.');
+      y += 4;
+
+      sectionTitle('Upcoming Fixtures');
+      if(upcoming.length){
+        upcoming.forEach(m=>{
+          const d = new Date(m.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+          dataRow(d+'  vs '+(m.opponent||'TBD'), m.venue || m.location || 'Venue TBD');
+        });
+      } else {
+        emptyNote('No upcoming fixtures scheduled.');
+      }
+
+      doc.save('ECP-Spartans-season-summary-'+todayISOStr+'.pdf');
+    } catch(e){
+      alert('Could not build the season summary — ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
+  }
+  $('seasonSummaryBtn').addEventListener('click', generateSeasonSummaryPdf);
+
+  fillExpenseCategories();
+  const pageFromPath = (()=>{
+    // Vercel serves clean URLs (e.g. /fixtures, no ".html"), so strip any
+    // extension before matching — this also still works if opened as
+    // fixtures.html directly (local file, or hosting without clean URLs).
+    const p = location.pathname.split('/').pop().toLowerCase().replace(/\.html$/, '');
+    if(p === 'fixtures') return 'fixtures';
+    if(p === 'finances') return 'finances';
+    if(p === 'contributions') return 'contributions';
+    if(p === 'admin') return 'admin';
+    return location.hash.slice(1) || 'home';
+  })();
+  showPage(pageFromPath, false);
+  loadAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECP Spartans — Player Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{--pitch:#173226;--deep:#0f2019;--chalk:#f1eee2;--dim:#c9c4b2;--gold:#c9a227;--ball:#d1401f;--line:rgba(241,238,226,.14);font-family:Inter,sans-serif}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgba(201,162,39,.12),transparent 50%),repeating-linear-gradient(180deg,rgba(255,255,255,.015) 0 40px,transparent 40px 80px),var(--pitch);color:var(--chalk)}
+  .wrap{max-width:900px;margin:auto;padding:24px 16px 60px} header{border-bottom:1px solid var(--line);padding:5px 2px 18px}.eyebrow{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}h1{font:700 32px/1.1 Oswald,sans-serif;margin:5px 0}.sub{color:var(--dim);font-size:14px}.page-nav{display:flex;gap:7px;overflow:auto;padding:18px 0 4px}.page-tab{white-space:nowrap;border:1px solid var(--line);color:var(--dim);text-decoration:none;border-radius:999px;padding:8px 12px;font:600 11px 'JetBrains Mono',monospace}.page-tab.active{background:var(--gold);border-color:var(--gold);color:var(--deep)}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:24px 0}.summary div,.player{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:11px}.summary div{padding:14px;text-align:center}.summary b{display:block;color:var(--gold);font:700 27px Oswald,sans-serif}.summary span{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+  .head{display:flex;justify-content:space-between;align-items:baseline;margin:27px 0 10px}.head h2{margin:0;font:600 20px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.04em}.head span{font:600 11px 'JetBrains Mono',monospace;color:var(--dim)}.note{color:var(--dim);font-size:13px;line-height:1.5;margin:0 0 14px}
+  .source{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035);color:var(--dim);font-size:12px}.source b{display:block;color:var(--chalk);margin-bottom:3px}.source a{white-space:nowrap;text-decoration:none;background:var(--gold);color:var(--deep);padding:9px 11px;border-radius:6px;font:700 10px 'JetBrains Mono',monospace}
+  .leader-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.leader-tab{border:1px solid var(--line);background:rgba(255,255,255,.035);color:var(--chalk);border-radius:7px;padding:11px 7px;font:700 13px 'JetBrains Mono',monospace;cursor:pointer}.leader-tab.active{background:#1d9891;border-color:#1d9891}.leaderboard{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:rgba(255,255,255,.035)}.leader-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:12px;border-bottom:1px solid var(--line)}.leader-row:last-child{border:0}.rank{font:700 22px Oswald,sans-serif;color:var(--gold);text-align:center}.leader-name{font:700 18px Oswald,sans-serif}.leader-meta{font-size:12px;color:var(--dim);margin-top:2px}.leader-meta b{color:var(--chalk)}.leader-value{text-align:right;font:700 21px Oswald,sans-serif;color:#77d2ca}.leader-value span{display:block;color:var(--dim);font:700 9px 'JetBrains Mono',monospace;letter-spacing:.08em}.leader-empty{padding:22px;text-align:center;color:var(--dim);font-size:13px}.leader-empty a{color:var(--gold)}
+  .player{padding:16px;margin-bottom:11px}.player-top{display:flex;justify-content:space-between;gap:14px;align-items:start}.name{font:600 20px Oswald,sans-serif}.primary{font:700 25px Oswald,sans-serif;color:var(--gold);text-align:right}.primary small{display:block;font:600 10px 'JetBrains Mono',monospace;color:var(--dim);letter-spacing:.08em}.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:14px}.metric{background:rgba(0,0,0,.13);padding:9px 6px;border-radius:7px;text-align:center}.metric b{font:700 17px Oswald,sans-serif;display:block}.metric span{font:700 9px 'JetBrains Mono',monospace;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}.edit{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}.edit-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.field label{font:700 9px 'JetBrains Mono',monospace;color:var(--dim);letter-spacing:.05em;display:block;margin-bottom:4px}.field input{width:100%;background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--chalk);padding:8px;border-radius:6px;font:600 14px Inter,sans-serif}.save{margin-top:10px;background:var(--gold);border:0;border-radius:6px;padding:9px 12px;font:700 11px 'JetBrains Mono',monospace;color:var(--deep);cursor:pointer}.empty{padding:35px 15px;text-align:center;border:1px dashed var(--line);border-radius:11px;color:var(--dim)}
+  .score-form{border:1px solid rgba(201,162,39,.45);border-radius:11px;padding:15px;background:rgba(255,255,255,.035);margin-bottom:18px}.score-form h3{font:600 18px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}.score-form p{font-size:12px;color:var(--dim);margin:0 0 12px}.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.field select,.field input{width:100%;background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--chalk);padding:8px;border-radius:6px;font:600 14px Inter,sans-serif}.field select option{background:#fff;color:#102418;font-weight:600}.check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);padding-top:19px}.score-save{margin-top:12px;background:var(--gold);border:0;border-radius:6px;padding:10px 13px;font:700 11px 'JetBrains Mono',monospace;color:var(--deep);cursor:pointer}.score-cancel,.delete-stats{margin:12px 0 0 7px;border:1px solid var(--line);background:transparent;color:var(--chalk);border-radius:6px;padding:9px 10px;font:700 10px 'JetBrains Mono',monospace;cursor:pointer}.delete-stats{border-color:rgba(209,64,31,.7);color:#ff9d8c}.match-history{margin-top:12px;color:var(--dim);font:600 11px 'JetBrains Mono',monospace;line-height:1.75}.match-history b{color:var(--chalk)}.edit-match,.delete-match{margin-left:5px;border:1px solid var(--line);background:transparent;color:var(--gold);border-radius:4px;padding:3px 5px;font:700 9px 'JetBrains Mono',monospace;cursor:pointer}.delete-match{color:#ff9d8c;border-color:rgba(209,64,31,.7)}
+  @media(max-width:600px){.metrics{grid-template-columns:repeat(3,1fr)}.edit-grid{grid-template-columns:repeat(3,1fr)}.summary{grid-template-columns:repeat(3,1fr)}.summary b{font-size:23px}}
+body{overflow:hidden;}
+body.gate-unlocked{overflow:visible;}
+.access-gate{position:fixed;inset:0;z-index:1000;background:var(--deep);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+body.gate-unlocked .access-gate{display:none;}
+.access-gate::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -10%, rgba(201,162,39,0.14), transparent 55%);}
+.gate-panel{position:relative;width:100%;max-width:400px;margin:auto;border:1px solid var(--line);border-radius:14px;background:var(--pitch);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.gate-hero{position:relative;height:150px;}
+.gate-hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;}
+.gate-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,32,25,.1),var(--pitch) 97%);}
+.gate-body{padding:6px 26px 26px;}
+.gate-body h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:2px 0 6px;}
+.gate-sub{color:var(--dim);font-size:12.5px;line-height:1.45;margin:0 0 18px;}
+.gate-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+.gate-tab{flex:1;background:none;border:none;color:var(--dim);font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.03em;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.gate-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.gate-pane{display:flex;flex-direction:column;gap:9px;}
+.gate-label{font:600 10.5px 'JetBrains Mono',monospace;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-top:2px;}
+.gate-pane input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:7px;color:var(--chalk);padding:10px 11px;font-size:13.5px;font-family:'Inter',sans-serif;width:100%;}
+.gate-hint{font-size:11.5px;color:var(--dim);line-height:1.4;margin:0 0 2px;}
+.gate-btn{border:0;border-radius:7px;padding:11px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;width:100%;}
+.gate-btn.primary{background:var(--gold);color:var(--deep);margin-top:4px;}
+.gate-btn.link{background:none;color:var(--dim);font-weight:600;font-size:11.5px;padding:6px;text-decoration:underline;}
+.gate-btn.guest{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+.gate-status{font-size:11.5px;line-height:1.4;min-height:14px;margin:8px 0 0;color:var(--dim);}
+.gate-status.ok{color:#8fd19e;}
+.gate-status.err{color:#ef8577;}
+.gate-divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;}
+.gate-divider::before,.gate-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+.gate-guest-note{font-size:11px;color:var(--dim);line-height:1.4;margin:10px 0 0;text-align:center;}
+@media(max-width:480px){.gate-hero{height:120px;} .gate-body{padding:6px 20px 22px;}}
+.auth-bar{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035);}
+.auth-row{display:flex;gap:7px;flex-wrap:wrap;}
+.auth-btn{background:var(--gold);color:var(--deep);border:0;border-radius:6px;padding:8px 11px;font-weight:700;cursor:pointer;font-size:12px;}
+.auth-btn.secondary{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+.auth-status{margin-top:7px;font-size:11px;color:var(--dim);line-height:1.4;}
+.auth-status.ok{color:#8fd19e;}
+.auth-status.err{color:#ef8577;}
+</style>
+</head>
+<body>
+<div id="accessGate" class="access-gate">
+  <div class="gate-panel">
+    <div class="gate-hero">
+      <img src="ecp-spartans-hero.jpeg" alt="ECP Spartans cricket player celebrating with a raised bat">
+    </div>
+    <div class="gate-body">
+      <div class="eyebrow">◈ Cricket Club Hub</div>
+      <h1>ECP Spartans</h1>
+      <p class="gate-sub">Fixtures, team availability, expenses, and collections in one place.</p>
+      <div class="gate-tabs">
+        <button type="button" class="gate-tab active" data-gate-tab="login">Log in</button>
+        <button type="button" class="gate-tab" data-gate-tab="signup">Admin setup</button>
+      </div>
+      <div class="gate-pane" data-gate-pane="login">
+        <label class="gate-label" for="gateEmail">Email</label>
+        <input id="gateEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="gate-label" for="gatePassword">Password</label>
+        <input id="gatePassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" class="gate-btn primary" id="gateLoginBtn">Log in</button>
+        <button type="button" class="gate-btn link" id="gateMagicBtn">Email me a login link instead</button>
+      </div>
+      <div class="gate-pane" data-gate-pane="signup" hidden>
+        <p class="gate-hint">First time setting up? Only the club's admin email can register.</p>
+        <label class="gate-label" for="gateSignupEmail">Admin email</label>
+        <input id="gateSignupEmail" type="email" placeholder="Admin email" autocomplete="email">
+        <label class="gate-label" for="gateSignupPassword">Choose a password</label>
+        <input id="gateSignupPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <button type="button" class="gate-btn primary" id="gateSignupBtn">Create admin account</button>
+      </div>
+      <div class="gate-status" id="gateStatus"></div>
+      <div class="gate-divider"><span>or</span></div>
+      <button type="button" class="gate-btn guest" id="gateGuestBtn">Continue as Guest</button>
+      <p class="gate-guest-note">Guests can view fixtures, finances, and contributions. Only the admin account can add or edit data.</p>
+    </div>
+  </div>
+</div>
+<main class="wrap">
+  <header><div class="eyebrow">◈ Cricket Club Hub</div><h1>ECP Spartans</h1><div class="sub">Season batting, bowling and fielding records.</div>
+    <nav class="page-nav" aria-label="Site pages">
+      <a class="page-tab" href="index.html">Home</a><a class="page-tab" href="fixtures.html">Fixtures</a><a class="page-tab" href="finances.html">Finances</a><a class="page-tab" href="contributions.html">Contributions</a><a class="page-tab" href="team-stats.html">Team Stats</a><a class="page-tab active" href="player-stats.html">Player Stats</a><a class="page-tab" href="admin.html">Admin</a>
+    </nav>
+    <div class="auth-bar" id="authBar">
+    <div class="auth-row" id="authGuestRow" hidden>
+      <span class="auth-status" style="flex:1;align-self:center;">👤 Browsing as Guest — view only</span>
+      <button class="auth-btn secondary" id="authGuestSwitchBtn">Log in</button>
+    </div>
+    <div class="auth-row" id="authSignedIn" hidden>
+      <span id="authUserLabel" class="auth-status ok" style="flex:1;align-self:center;"></span>
+      <button class="auth-btn secondary" id="authLogoutBtn">Logout</button>
+    </div>
+    <div class="auth-status" id="authStatus"></div>
+  </div>
+  </header>
+  <section class="summary" aria-label="Season highlights"><div><b id="totalRuns">0</b><span>Team runs</span></div><div><b id="topScorer">—</b><span>Top scorer</span></div><div><b id="totalWickets">0</b><span>Wickets</span></div></section>
+  <div class="source"><div><b>Live scoring source: CricHeroes</b>ECP Spartans – No Mercy · Team ID 419147</div><a href="https://cricheroes.com/team-profile/419147/ECP-Spartans---No-Mercy/statistics" target="_blank" rel="noopener">OPEN LIVE STATS ↗</a></div>
+  <div class="head"><h2>CricHeroes Leaderboard</h2><span>All-time team records</span></div>
+  <div class="leader-tabs" role="tablist" aria-label="Leaderboard category"><button class="leader-tab active" data-board="bat">BAT</button><button class="leader-tab" data-board="bowl">BOWL</button><button class="leader-tab" data-board="field">FIELD</button></div>
+  <section class="leaderboard" id="leaderboard" aria-live="polite"></section>
+  <div class="head"><h2>Player Stats</h2><span id="playerCount">0 players</span></div>
+  <p class="note">Enter one player performance after each match. Season totals are calculated automatically from the match entries.</p>
+  <button id="statsPdfBtn" class="score-save" type="button">Download player stats PDF</button>
+  <section class="score-form" id="scoreForm" aria-label="Add match performance"><h3 id="scoreHeading">Match performance</h3><p>Admin only — select a fixture from the uploaded schedule, then record one player’s batting, bowling and fielding performance.</p><div class="score-grid"><div class="field"><label>Scheduled match</label><select id="scoreDate"></select></div><div class="field"><label>Opponent</label><input id="scoreOpponent" placeholder="Select a scheduled match" readonly></div><div class="field"><label>Player</label><select id="scorePlayer"></select></div><div class="field"><label>Runs</label><input id="scoreRuns" type="number" min="0" value="0"></div><div class="field"><label>Balls faced</label><input id="scoreBalls" type="number" min="0" value="0"></div><div class="field"><label>Wickets</label><input id="scoreWickets" type="number" min="0" value="0"></div><div class="field"><label>Catches</label><input id="scoreCatches" type="number" min="0" value="0"></div><label class="check"><input id="scoreBatted" type="checkbox" checked> Batted</label><label class="check"><input id="scoreNotOut" type="checkbox"> Not out</label></div><button id="scoreSave" class="score-save">Save match performance</button><button id="scoreCancel" class="score-cancel" hidden>Cancel edit</button></section>
+  <section id="playerList"></section>
+</main>
+<script>
+(() => {
+  const SUPABASE_URL='https://vttyyoenrzuhbloocfgr.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY='sb_publishable__i92X7tfRMOfpjcVUmqhkg_wQ1pwdgp';
+  const ADMIN_EMAIL='ammarsajid666@gmail.com';
+  const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+  const state={contacts:[],contributions:{},scheduleMatches:[],playerStats:{},matchStats:[]}; let currentUser=null,isAdmin=false,editingMatchId=null;
+  const cricHeroesBoard={bat:[
+    {name:'Ammar',innings:159,value:5642,avg:'36.88',rate:'109.64'},
+    {name:'Muhammad Kamran Rafi',innings:142,value:5024,avg:'36.41',rate:'136.26'},
+    {name:'M Haris',innings:106,value:3518,avg:'39.09',rate:'116.92'},
+    {name:'Saad Ehsaan',innings:113,value:2148,avg:'26.20',rate:'101.99'},
+    {name:'Muhammad Saad Siddiqui',innings:55,value:1714,avg:'32.34',rate:'104.13'}
+  ],bowl:[
+    {name:'Saad Ehsaan',innings:129,value:190,avg:'21.83',rate:'5.71',high:6},
+    {name:'Ahmad Aziz',innings:140,value:190,avg:'21.55',rate:'5.86',high:7},
+    {name:'Faheem Ahmad',innings:111,value:147,avg:'19.14',rate:'5.87',high:6},
+    {name:'Zain Ul Hussain',innings:51,value:91,avg:'18.32',rate:'5.73',high:4},
+    {name:'Hussnain Ali',innings:56,value:86,avg:'16.62',rate:'6.62',high:6}
+  ],field:[
+    {name:'Ahmad Aziz',matches:162,value:108,catches:91,runOuts:15},
+    {name:'Ammar',matches:171,value:107,catches:87,runOuts:20},
+    {name:'Hassan Sheikh',matches:122,value:104,catches:70,runOuts:6},
+    {name:'Muhammad Kamran Rafi',matches:151,value:85,catches:64,runOuts:14},
+    {name:'Ahmad Sheraz',matches:138,value:66,catches:49,runOuts:6}
+  ]};
+  const $=id=>document.getElementById(id); const key=n=>String(n||'').trim().toLowerCase();
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  function setAuthStatus(message, type=''){
+    const el = $('authStatus');
+    el.textContent = message;
+    el.className = 'auth-status' + (type ? ' '+type : '');
+  }
+  function setGateStatus(message, type=''){
+    const el = $('gateStatus');
+    if(!el) return;
+    el.textContent = message;
+    el.className = 'gate-status' + (type ? ' '+type : '');
+  }
+  const ACCESS_KEY = 'ecpAccessMode';
+  function isGuestMode(){ return localStorage.getItem(ACCESS_KEY) === 'guest'; }
+  function evaluateAccess(){
+    document.body.classList.toggle('gate-unlocked', !!currentUser || isGuestMode());
+  }
+  function updateAuthUI(){
+    document.body.classList.toggle('admin', isAdmin);
+    const guest = !currentUser && isGuestMode();
+    $('authGuestRow').hidden = !guest;
+    $('authSignedIn').hidden = !currentUser;
+    if(currentUser){
+      $('authUserLabel').textContent = isAdmin ? `Signed in as ${currentUser.email} · Admin editing enabled` : `Signed in as ${currentUser.email} · Read-only`;
+      setAuthStatus(isAdmin ? 'You can now edit and save club data.' : 'This account is not the configured admin account.', isAdmin ? 'ok' : 'err');
+    }else{
+      setAuthStatus('');
+    }
+    evaluateAccess();
+  }
+  document.querySelectorAll('.gate-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.gate-tab').forEach(t=>t.classList.toggle('active', t===tab));
+      document.querySelectorAll('.gate-pane').forEach(p=>{ p.hidden = p.dataset.gatePane !== tab.dataset.gateTab; });
+      setGateStatus('');
+    });
+  });
+  $('gateGuestBtn').addEventListener('click', ()=>{
+    localStorage.setItem(ACCESS_KEY, 'guest');
+    updateAuthUI();
+  });
+  $('authGuestSwitchBtn').addEventListener('click', ()=>{
+    localStorage.removeItem(ACCESS_KEY);
+    updateAuthUI();
+  });
+  $('gateLoginBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    const password = $('gatePassword').value;
+    if(!email || !password){ setGateStatus('Enter your email and password.', 'err'); return; }
+    setGateStatus('Signing in…');
+    const {error} = await supabase.auth.signInWithPassword({email, password});
+    if(error) setGateStatus(error.message, 'err');
+  });
+  $('gateMagicBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    if(!email){ setGateStatus('Enter your email first.', 'err'); return; }
+    setGateStatus('Sending login link…');
+    const {error} = await supabase.auth.signInWithOtp({email, options:{emailRedirectTo:window.location.href}});
+    if(error) setGateStatus(error.message, 'err');
+    else setGateStatus('Login link sent. Check your email and open the link on this device.', 'ok');
+  });
+  $('gateSignupBtn').addEventListener('click', async ()=>{
+    const email = $('gateSignupEmail').value.trim().toLowerCase();
+    const password = $('gateSignupPassword').value;
+    if(email !== ADMIN_EMAIL){ setGateStatus('Only the configured admin email can create the admin account.', 'err'); return; }
+    if(password.length < 6){ setGateStatus('Choose a password with at least 6 characters.', 'err'); return; }
+    setGateStatus('Creating your admin account…');
+    const {data, error} = await supabase.auth.signUp({email, password});
+    if(error) setGateStatus(error.message, 'err');
+    else if(data.session) setGateStatus('Admin account created and signed in.', 'ok');
+    else setGateStatus('Account created. Check your email if confirmation is required, then log in.', 'ok');
+  });
+  $('authLogoutBtn').addEventListener('click', async ()=>{ localStorage.removeItem(ACCESS_KEY); await supabase.auth.signOut(); });
+  evaluateAccess();
+  
+  async function get(name){const {data,error}=await supabase.from('club_data').select('value').eq('key',name).maybeSingle();if(error)throw error;return data?data.value:null}
+  async function save(){if(!isAdmin){location.href='admin.html?returnTo=player-stats.html';return}const {error}=await supabase.from('club_data').upsert({key:'playerStats',value:JSON.stringify(state.playerStats),updated_at:new Date().toISOString(),updated_by:currentUser.id},{onConflict:'key'});if(error)alert('Could not save stats: '+error.message)}
+  async function saveMatchStats(){if(!isAdmin){location.href='admin.html?returnTo=player-stats.html';return false}const {error}=await supabase.from('club_data').upsert({key:'matchStats',value:JSON.stringify(state.matchStats),updated_at:new Date().toISOString(),updated_by:currentUser.id},{onConflict:'key'});if(error){alert('Could not save match performance: '+error.message);return false}return true}
+  function number(v){return Math.max(0,Number(v)||0)}
+  function names(){const map=new Map();state.contacts.forEach(p=>map.set(key(p.name),p.name));Object.values(state.contributions).forEach(p=>map.set(key(p.name),p.name));Object.keys(state.playerStats).forEach(k=>map.set(k,state.playerStats[k].name||k));state.matchStats.forEach(item=>map.set(key(item.player),item.player));return [...map.values()].filter(Boolean).sort((a,b)=>a.localeCompare(b))}
+  function stat(name){const k=key(name);if(!state.playerStats[k])state.playerStats[k]={name,matches:0,innings:0,runs:0,notOuts:0,highScore:0,balls:0,wickets:0,catches:0};return state.playerStats[k]}
+  function seasonStat(name){const entries=state.matchStats.filter(item=>key(item.player)===key(name));if(!entries.length)return stat(name);const unique=new Set(entries.map(item=>item.matchKey));const batting=entries.filter(item=>item.batted);return {name,matches:unique.size,innings:batting.length,runs:entries.reduce((sum,item)=>sum+number(item.runs),0),notOuts:entries.filter(item=>item.notOut).length,highScore:batting.reduce((high,item)=>Math.max(high,number(item.runs)),0),balls:entries.reduce((sum,item)=>sum+number(item.balls),0),wickets:entries.reduce((sum,item)=>sum+number(item.wickets),0),catches:entries.reduce((sum,item)=>sum+number(item.catches),0)}}
+  function generateStatsPdf(){if(!window.jspdf||!window.jspdf.jsPDF){alert('The PDF tool is still loading. Please try again in a moment.');return}const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'}),today=new Date().toISOString().slice(0,10),players=names().sort((a,b)=>number(seasonStat(b).runs)-number(seasonStat(a).runs));let y=0;const pageHeader=(title,subtitle)=>{doc.setFillColor(15,32,25);doc.rect(0,0,210,297,'F');doc.setTextColor(201,162,39);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('ECP SPARTANS',15,16);doc.setTextColor(241,238,226);doc.setFontSize(19);doc.text(title,15,27);doc.setTextColor(201,196,178);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(subtitle,15,34);y=45};const row=(columns,widths,header=false)=>{if(y>274){doc.addPage();pageHeader('Player Statistics Report','Generated '+today)}doc.setFont('helvetica',header?'bold':'normal');doc.setFontSize(header?7.5:7.2);doc.setTextColor(header?201:241,header?162:238,header?39:226);let x=15;columns.forEach((value,index)=>{const clipped=String(value).length>widths[index]/1.4?String(value).slice(0,Math.max(3,Math.floor(widths[index]/1.4)-1))+'…':String(value);doc.text(clipped,x,y);x+=widths[index]});doc.setDrawColor(73,95,81);doc.line(15,y+2,195,y+2);y+=7};pageHeader('Player Statistics Report','Generated '+today+'  |  Match-by-match records');doc.setTextColor(201,196,178);doc.setFontSize(8);doc.text(players.length+' players  |  '+state.matchStats.length+' saved performance entries',15,40);row(['PLAYER','MAT','INN','RUNS','HIGH','AVG','SR','WKTS','CATCHES'],[46,12,12,18,15,18,18,18,23],true);players.forEach(name=>{const s=seasonStat(name),dismissals=number(s.innings)-number(s.notOuts),avg=dismissals>0?(number(s.runs)/dismissals).toFixed(2):'—',sr=number(s.balls)>0?((number(s.runs)/number(s.balls))*100).toFixed(1):'—';row([name,number(s.matches),number(s.innings),number(s.runs).toLocaleString(),number(s.highScore),avg,sr,number(s.wickets),number(s.catches)],[46,12,12,18,15,18,18,18,23])});const entries=[...state.matchStats].sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.player).localeCompare(String(b.player)));if(entries.length){if(y>247){doc.addPage();pageHeader('Match-by-match Records','Generated '+today)}else{y+=8;doc.setTextColor(241,238,226);doc.setFont('helvetica','bold');doc.setFontSize(14);doc.text('Match-by-match Records',15,y);y+=10}row(['DATE','OPPONENT','PLAYER','RUNS','BALLS','WKTS','CATCHES','NOT OUT'],[22,38,43,16,16,16,17,18],true);entries.forEach(item=>row([item.date||'—',item.opponent||'—',item.player||'—',number(item.runs),number(item.balls),number(item.wickets),number(item.catches),item.notOut?'Yes':'No'],[22,38,43,16,16,16,17,18]))}doc.save('ECP-Spartans-player-stats-'+today+'.pdf')}
+  function renderBoard(kind='bat') {const box=$('leaderboard'),data=cricHeroesBoard[kind];document.querySelectorAll('.leader-tab').forEach(b=>b.classList.toggle('active',b.dataset.board===kind));const meta=p=>kind==='bat'?`Inn: ${p.innings} | <b>Runs: ${p.value}</b> | Avg: ${p.avg} | SR: ${p.rate}`:kind==='bowl'?`Inn: ${p.innings} | <b>Wkts: ${p.value}</b> | Avg: ${p.avg} | Econ: ${p.rate} | Best: ${p.high}`:`Matches: ${p.matches} | <b>Dismissals: ${p.value}</b> | Catches: ${p.catches} | Run outs: ${p.runOuts}`;const label=kind==='bat'?'RUNS':kind==='bowl'?'WICKETS':'DISMISSALS';box.innerHTML=data.map((p,i)=>`<div class="leader-row"><div class="rank">${String(i+1).padStart(2,'0')}</div><div><div class="leader-name">${esc(p.name)}</div><div class="leader-meta">${meta(p)}</div></div><div class="leader-value">${p.value.toLocaleString()}<span>${label}</span></div></div>`).join('')}
+  const fixtureKey=m=>m.date+'|'+key(m.opponent);const fixtureLabel=m=>new Date(m.date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' - vs '+m.opponent;function selectedFixture(){return state.scheduleMatches.find(m=>fixtureKey(m)===$('scoreDate').value)}function fillScoreFixtures(selected=''){const select=$('scoreDate'),current=selected||select.value,fixtures=[...state.scheduleMatches].sort((a,b)=>a.date.localeCompare(b.date)||String(a.opponent).localeCompare(String(b.opponent)));select.innerHTML=fixtures.length?fixtures.map(m=>`<option value="${esc(fixtureKey(m))}">${esc(fixtureLabel(m))}</option>`).join(''):'<option value="">Upload the schedule in Fixtures first</option>';if(fixtures.some(m=>fixtureKey(m)===current))select.value=current;else if(fixtures.length){const today=new Date().toISOString().slice(0,10),upcoming=fixtures.find(m=>m.date>=today);select.value=fixtureKey(upcoming||fixtures[0])}const fixture=selectedFixture();$('scoreOpponent').value=fixture?(fixture.opponent||''):''}function fillScorePlayers(players){const select=$('scorePlayer'),current=select.value;select.innerHTML=players.length?players.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join(''):'<option value="">Add players first</option>';if(players.includes(current))select.value=current}
+  function resetScoreForm(){editingMatchId=null;$('scoreHeading').textContent='Match performance';$('scoreSave').textContent='Save match performance';$('scoreCancel').hidden=true;['scoreRuns','scoreBalls','scoreWickets','scoreCatches'].forEach(id=>$(id).value=0);$('scoreBatted').checked=true;$('scoreNotOut').checked=false;fillScoreFixtures()}
+  function editMatch(id){const item=state.matchStats.find(entry=>entry.id===id);if(!item)return;editingMatchId=id;$('scoreHeading').textContent='Edit match performance';fillScoreFixtures(item.date+'|'+key(item.opponent));$('scoreOpponent').value=item.opponent||'';fillScorePlayers(names());$('scorePlayer').value=item.player||'';$('scoreRuns').value=number(item.runs);$('scoreBalls').value=number(item.balls);$('scoreWickets').value=number(item.wickets);$('scoreCatches').value=number(item.catches);$('scoreBatted').checked=!!item.batted;$('scoreNotOut').checked=!!item.notOut;$('scoreSave').textContent='Update match performance';$('scoreCancel').hidden=false;$('scoreForm').scrollIntoView({behavior:'smooth',block:'start'})}
+  function render(){const players=names();let runs=0,wickets=0,leader=null;players.forEach(n=>{const s=seasonStat(n);runs+=number(s.runs);wickets+=number(s.wickets);if(!leader||number(s.runs)>number(seasonStat(leader).runs))leader=n});$('totalRuns').textContent=runs.toLocaleString();$('totalWickets').textContent=wickets.toLocaleString();$('topScorer').textContent=leader?(leader.split(' ')[0]+' · '+number(seasonStat(leader).runs)):'—';$('playerCount').textContent=players.length+' '+(players.length===1?'player':'players');fillScoreFixtures();fillScorePlayers(players);const list=$('playerList');if(!players.length){list.innerHTML='<div class="empty">No players found yet. Add players in Admin, or import the contribution file first.</div>';return}list.innerHTML='';players.sort((a,b)=>number(seasonStat(b).runs)-number(seasonStat(a).runs)).forEach(name=>{const s=seasonStat(name), avg=s.innings-s.notOuts>0?(s.runs/(s.innings-s.notOuts)).toFixed(2):'—',sr=s.balls>0?((s.runs/s.balls)*100).toFixed(1):'—',history=state.matchStats.filter(item=>key(item.player)===key(name)).sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,3);const row=document.createElement('article');row.className='player';row.innerHTML=`<div class="player-top"><div class="name">${esc(name)}</div><div class="primary">${number(s.runs).toLocaleString()}<small>RUNS</small></div></div><div class="metrics"><div class="metric"><b>${number(s.matches)}</b><span>Matches</span></div><div class="metric"><b>${number(s.innings)}</b><span>Innings</span></div><div class="metric"><b>${number(s.highScore)}</b><span>High</span></div><div class="metric"><b>${avg}</b><span>Average</span></div><div class="metric"><b>${sr}</b><span>Strike rate</span></div><div class="metric"><b>${number(s.wickets)}</b><span>Wickets</span></div></div>${history.length?`<div class="match-history"><b>Recent:</b> ${history.map(item=>`<div>${esc(item.date)} vs ${esc(item.opponent)} — ${number(item.runs)} runs, ${number(item.wickets)} wkts <button class="edit-match" data-id="${item.id}">Edit</button><button class="delete-match" data-id="${item.id}">Delete</button></div>`).join('')}</div>`:''}<button class="delete-stats">Delete ${esc(name)}'s stats</button>`;row.querySelectorAll('.edit-match').forEach(btn=>btn.addEventListener('click',()=>editMatch(btn.dataset.id)));row.querySelectorAll('.delete-match').forEach(btn=>btn.addEventListener('click',async()=>{if(!isAdmin){location.href='admin.html?returnTo=player-stats.html';return}const item=state.matchStats.find(entry=>entry.id===btn.dataset.id);if(!item||!confirm(`Delete the ${item.date} match performance for ${item.player}?`))return;state.matchStats=state.matchStats.filter(entry=>entry.id!==btn.dataset.id);if(await saveMatchStats())render()}));row.querySelector('.delete-stats').addEventListener('click',async()=>{if(!isAdmin){location.href='admin.html?returnTo=player-stats.html';return}if(!confirm(`Delete all recorded match stats for ${name}? This cannot be undone.`))return;state.matchStats=state.matchStats.filter(item=>key(item.player)!==key(name));delete state.playerStats[key(name)];await save();if(await saveMatchStats())render()});list.appendChild(row)})}
+  async function load(){try{const [contacts,contributions,scheduleMatches,stats,matchStats]=await Promise.all([get('contacts'),get('contributions'),get('matches'),get('playerStats'),get('matchStats')]);state.contacts=contacts?(typeof contacts==='string'?JSON.parse(contacts):contacts):[];state.contributions=contributions?(typeof contributions==='string'?JSON.parse(contributions):contributions):{};state.scheduleMatches=scheduleMatches?(typeof scheduleMatches==='string'?JSON.parse(scheduleMatches):scheduleMatches):[];state.playerStats=stats?(typeof stats==='string'?JSON.parse(stats):stats):{};state.matchStats=matchStats?(typeof matchStats==='string'?JSON.parse(matchStats):matchStats):[]}catch(e){state.contacts=[];state.contributions={};state.scheduleMatches=[];state.playerStats={};state.matchStats=[]}render()}
+  $('statsPdfBtn').addEventListener('click',generateStatsPdf);
+  $('scoreDate').addEventListener('change',()=>{const fixture=selectedFixture();$('scoreOpponent').value=fixture?(fixture.opponent||''):''});
+  $('scoreSave').addEventListener('click',async()=>{if(!isAdmin){location.href='admin.html?returnTo=player-stats.html';return}const fixture=selectedFixture(),player=$('scorePlayer').value;if(!fixture||!player){alert('Select a scheduled match and player.');return}const date=fixture.date,opponent=fixture.opponent;const entry={id:editingMatchId||Date.now()+'-'+Math.random().toString(36).slice(2),matchKey:date+'|'+opponent.toLowerCase(),date,opponent,player,runs:number($('scoreRuns').value),balls:number($('scoreBalls').value),wickets:number($('scoreWickets').value),catches:number($('scoreCatches').value),batted:$('scoreBatted').checked,notOut:$('scoreNotOut').checked};if(editingMatchId){const index=state.matchStats.findIndex(item=>item.id===editingMatchId);if(index!==-1)state.matchStats[index]=entry}else state.matchStats.push(entry);if(await saveMatchStats()){resetScoreForm();render()}});
+  $('scoreCancel').addEventListener('click',resetScoreForm);
+  document.querySelectorAll('.leader-tab').forEach(btn=>btn.addEventListener('click',()=>renderBoard(btn.dataset.board)));renderBoard();
+  supabase.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;isAdmin=!!currentUser&&(currentUser.email||'').toLowerCase()===ADMIN_EMAIL;if(currentUser)localStorage.removeItem(ACCESS_KEY);updateAuthUI();load()});supabase.auth.getSession().then(({data})=>{currentUser=data.session?.user||null;isAdmin=!!currentUser&&(currentUser.email||'').toLowerCase()===ADMIN_EMAIL;if(currentUser)localStorage.removeItem(ACCESS_KEY);updateAuthUI();load()});
+})();
+</script>
+</body>
+</html>

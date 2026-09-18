@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECP Spartans — Team Stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--pitch:#173226;--deep:#0f2019;--chalk:#f1eee2;--dim:#c9c4b2;--gold:#c9a227;--teal:#1d9891;--line:rgba(241,238,226,.14);font-family:Inter,sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,rgba(201,162,39,.12),transparent 50%),repeating-linear-gradient(180deg,rgba(255,255,255,.015) 0 40px,transparent 40px 80px),var(--pitch);color:var(--chalk)}.wrap{max-width:900px;margin:auto;padding:24px 16px 60px}header{border-bottom:1px solid var(--line);padding:5px 2px 18px}.eyebrow{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--gold);text-transform:uppercase}h1{font:700 32px/1.1 Oswald,sans-serif;margin:5px 0}.sub{color:var(--dim);font-size:14px}.page-nav{display:flex;gap:7px;overflow:auto;padding:18px 0 4px}.page-tab{white-space:nowrap;border:1px solid var(--line);color:var(--dim);text-decoration:none;border-radius:999px;padding:8px 12px;font:600 11px 'JetBrains Mono',monospace}.page-tab.active{background:var(--gold);border-color:var(--gold);color:var(--deep)}.source{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:22px 0;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:10px;padding:13px 14px;font-size:12px;color:var(--dim)}.source b{color:var(--chalk);display:block;margin-bottom:3px}.source a{background:var(--gold);color:var(--deep);padding:9px 11px;border-radius:6px;text-decoration:none;font:700 10px 'JetBrains Mono',monospace;white-space:nowrap}.head{display:flex;justify-content:space-between;align-items:baseline;margin:28px 0 10px}.head h2{font:600 20px Oswald,sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:0}.head span{font:600 11px 'JetBrains Mono',monospace;color:var(--dim)}.record{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:11px;padding:18px 8px;text-align:center}.card b{font:700 34px Oswald,sans-serif;color:var(--gold);display:block;line-height:1}.card span{display:block;margin-top:7px;color:var(--dim);font:700 10px 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}.feature{margin-top:12px;display:grid;grid-template-columns:1.2fr 1fr;gap:12px}.feature>div{border:1px solid var(--line);border-radius:11px;padding:18px;background:rgba(255,255,255,.035)}.win{font:700 48px Oswald,sans-serif;color:var(--teal)}.label{font:700 11px 'JetBrains Mono',monospace;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}.desc{margin:8px 0 0;color:var(--dim);font-size:13px;line-height:1.45}.results-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 14px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035)}.results-toolbar span{color:var(--dim);font-size:12px;line-height:1.4}.results-actions{display:flex;gap:7px;flex-wrap:wrap}.edit-results{flex:0 0 auto;background:var(--gold);color:var(--deep);padding:9px 12px;border:0;border-radius:6px;text-decoration:none;font:700 10px 'JetBrains Mono',monospace;white-space:nowrap;cursor:pointer}.edit-results.enabled{background:var(--teal);color:var(--chalk)}.match-list{display:grid;gap:18px}.team-filter-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025)}.team-filter-row label{font:700 10px 'JetBrains Mono',monospace;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}.team-filter-row select{min-width:250px;background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--chalk);border-radius:6px;padding:9px;font:600 12px Inter,sans-serif}.team-filter-row select option{color:#102418;background:#fff}.team-result-group{border:1px solid var(--line);border-radius:13px;padding:13px;background:rgba(255,255,255,.02)}.team-result-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:2px 2px 12px;border-bottom:1px solid var(--line);margin-bottom:10px}.team-result-head h3{font:600 20px Oswald,sans-serif;margin:3px 0 0}.team-result-label{font:700 9px 'JetBrains Mono',monospace;color:var(--gold);letter-spacing:.08em;text-transform:uppercase}.team-result-summary{text-align:right;color:var(--dim);font:700 10px 'JetBrains Mono',monospace;line-height:1.6}.team-result-summary b{color:var(--chalk)}.team-match-list{display:grid;gap:9px}.match-row{border:1px solid var(--line);border-radius:10px;padding:13px;background:rgba(255,255,255,.035)}.match-title{font:600 18px Oswald,sans-serif}.match-date{font:700 10px 'JetBrains Mono',monospace;color:var(--dim);margin:4px 0 10px}.match-controls{display:grid;grid-template-columns:150px 1fr auto;gap:7px}.match-controls select,.match-controls input{min-width:0;background:rgba(255,255,255,.055);border:1px solid var(--line);color:var(--chalk);border-radius:6px;padding:8px;font:600 12px Inter,sans-serif}.match-controls select option{color:#102418;background:#fff}.match-controls button{background:var(--gold);border:0;border-radius:6px;padding:8px 10px;color:var(--deep);font-weight:700;cursor:pointer}.match-view{color:var(--dim);font-size:12px}.result-won{color:#8fd19e;font-weight:700}.result-lost{color:#ff9d8c;font-weight:700}.empty{border:1px dashed var(--line);border-radius:10px;padding:22px;color:var(--dim);font-size:13px;text-align:center}@media(max-width:540px){.team-filter-row{align-items:flex-start;flex-direction:column}.team-filter-row select{width:100%;min-width:0}.results-toolbar{align-items:flex-start;flex-direction:column}.team-result-head{align-items:flex-start;flex-direction:column}.team-result-summary{text-align:left}.record{grid-template-columns:repeat(2,1fr)}.feature{grid-template-columns:1fr}.source{align-items:start;flex-direction:column}.match-controls{grid-template-columns:1fr}.match-controls button{width:100%}}
+body{overflow:hidden;}
+body.gate-unlocked{overflow:visible;}
+.access-gate{position:fixed;inset:0;z-index:1000;background:var(--deep);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+body.gate-unlocked .access-gate{display:none;}
+.access-gate::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -10%, rgba(201,162,39,0.14), transparent 55%);}
+.gate-panel{position:relative;width:100%;max-width:400px;margin:auto;border:1px solid var(--line);border-radius:14px;background:var(--pitch);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.gate-hero{position:relative;height:150px;}
+.gate-hero img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block;}
+.gate-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,32,25,.1),var(--pitch) 97%);}
+.gate-body{padding:6px 26px 26px;}
+.gate-body h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:2px 0 6px;}
+.gate-sub{color:var(--dim);font-size:12.5px;line-height:1.45;margin:0 0 18px;}
+.gate-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+.gate-tab{flex:1;background:none;border:none;color:var(--dim);font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.03em;padding:9px 4px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.gate-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.gate-pane{display:flex;flex-direction:column;gap:9px;}
+.gate-label{font:600 10.5px 'JetBrains Mono',monospace;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-top:2px;}
+.gate-pane input{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:7px;color:var(--chalk);padding:10px 11px;font-size:13.5px;font-family:'Inter',sans-serif;width:100%;}
+.gate-hint{font-size:11.5px;color:var(--dim);line-height:1.4;margin:0 0 2px;}
+.gate-btn{border:0;border-radius:7px;padding:11px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;width:100%;}
+.gate-btn.primary{background:var(--gold);color:var(--deep);margin-top:4px;}
+.gate-btn.link{background:none;color:var(--dim);font-weight:600;font-size:11.5px;padding:6px;text-decoration:underline;}
+.gate-btn.guest{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+.gate-status{font-size:11.5px;line-height:1.4;min-height:14px;margin:8px 0 0;color:var(--dim);}
+.gate-status.ok{color:#8fd19e;}
+.gate-status.err{color:#ef8577;}
+.gate-divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;}
+.gate-divider::before,.gate-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+.gate-guest-note{font-size:11px;color:var(--dim);line-height:1.4;margin:10px 0 0;text-align:center;}
+@media(max-width:480px){.gate-hero{height:120px;} .gate-body{padding:6px 20px 22px;}}
+.auth-bar{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.035);}
+.auth-row{display:flex;gap:7px;flex-wrap:wrap;}
+.auth-btn{background:var(--gold);color:var(--deep);border:0;border-radius:6px;padding:8px 11px;font-weight:700;cursor:pointer;font-size:12px;}
+.auth-btn.secondary{background:rgba(255,255,255,.06);color:var(--chalk);border:1px solid var(--line);}
+.auth-status{margin-top:7px;font-size:11px;color:var(--dim);line-height:1.4;}
+.auth-status.ok{color:#8fd19e;}
+.auth-status.err{color:#ef8577;}
+</style>
+</head>
+<body>
+<div id="accessGate" class="access-gate">
+  <div class="gate-panel">
+    <div class="gate-hero">
+      <img src="ecp-spartans-hero.jpeg" alt="ECP Spartans cricket player celebrating with a raised bat">
+    </div>
+    <div class="gate-body">
+      <div class="eyebrow">◈ Cricket Club Hub</div>
+      <h1>ECP Spartans</h1>
+      <p class="gate-sub">Fixtures, team availability, expenses, and collections in one place.</p>
+      <div class="gate-tabs">
+        <button type="button" class="gate-tab active" data-gate-tab="login">Log in</button>
+        <button type="button" class="gate-tab" data-gate-tab="signup">Admin setup</button>
+      </div>
+      <div class="gate-pane" data-gate-pane="login">
+        <label class="gate-label" for="gateEmail">Email</label>
+        <input id="gateEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="gate-label" for="gatePassword">Password</label>
+        <input id="gatePassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" class="gate-btn primary" id="gateLoginBtn">Log in</button>
+        <button type="button" class="gate-btn link" id="gateMagicBtn">Email me a login link instead</button>
+      </div>
+      <div class="gate-pane" data-gate-pane="signup" hidden>
+        <p class="gate-hint">First time setting up? Only the club's admin email can register.</p>
+        <label class="gate-label" for="gateSignupEmail">Admin email</label>
+        <input id="gateSignupEmail" type="email" placeholder="Admin email" autocomplete="email">
+        <label class="gate-label" for="gateSignupPassword">Choose a password</label>
+        <input id="gateSignupPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <button type="button" class="gate-btn primary" id="gateSignupBtn">Create admin account</button>
+      </div>
+      <div class="gate-status" id="gateStatus"></div>
+      <div class="gate-divider"><span>or</span></div>
+      <button type="button" class="gate-btn guest" id="gateGuestBtn">Continue as Guest</button>
+      <p class="gate-guest-note">Guests can view fixtures, finances, and contributions. Only the admin account can add or edit data.</p>
+    </div>
+  </div>
+</div>
+<main class="wrap"><header><div class="eyebrow">◈ CricHeroes Team Record</div><h1>ECP Spartans</h1><div class="sub">No Mercy · All-time match record and match decisions.</div><nav class="page-nav" aria-label="Site pages"><a class="page-tab" href="index.html">Home</a><a class="page-tab" href="fixtures.html">Fixtures</a><a class="page-tab" href="finances.html">Finances</a><a class="page-tab" href="contributions.html">Contributions</a><a class="page-tab active" href="team-stats.html">Team Stats</a><a class="page-tab" href="player-stats.html">Player Stats</a><a class="page-tab" href="admin.html">Admin</a></nav>
+  <div class="auth-bar" id="authBar">
+    <div class="auth-row" id="authGuestRow" hidden>
+      <span class="auth-status" style="flex:1;align-self:center;">👤 Browsing as Guest — view only</span>
+      <button class="auth-btn secondary" id="authGuestSwitchBtn">Log in</button>
+    </div>
+    <div class="auth-row" id="authSignedIn" hidden>
+      <span id="authUserLabel" class="auth-status ok" style="flex:1;align-self:center;"></span>
+      <button class="auth-btn secondary" id="authLogoutBtn">Logout</button>
+    </div>
+    <div class="auth-status" id="authStatus"></div>
+  </div>
+</header><div class="source"><div><b>Live scoring source: CricHeroes</b>ECP Spartans – No Mercy · Team ID 419147</div><a href="https://cricheroes.com/team-profile/419147/ECP-Spartans---No-Mercy/statistics" target="_blank" rel="noopener">OPEN LIVE STATS ↗</a></div><div class="head"><h2>Overall Team Statistics</h2><span>All-time record</span></div><section class="record"><div class="card"><b>179</b><span>Matches</span></div><div class="card"><b>107</b><span>Won</span></div><div class="card"><b>70</b><span>Lost</span></div><div class="card"><b>1</b><span>Tie</span></div><div class="card"><b>1</b><span>No Result</span></div><div class="card"><b>91</b><span>Toss Won</span></div></section><section class="feature"><div><div class="label">Win percentage</div><div class="win">60.5%</div><p class="desc">107 wins from 179 recorded matches.</p></div><div><div class="label">Match decisions</div><p class="desc"><b>53</b> bat first<br><b>38</b> field first<br><b>0</b> upcoming matches</p></div></section><div class="head"><h2>ECP Spartans Season 8 Statistics</h2><span>Season 8 record</span></div><section class="record"><div class="card"><b id="seasonMatches">0</b><span>Matches</span></div><div class="card"><b id="seasonWon">0</b><span>Won</span></div><div class="card"><b id="seasonLost">0</b><span>Lost</span></div><div class="card"><b id="seasonTie">0</b><span>Tie</span></div><div class="card"><b id="seasonNoResult">0</b><span>No Result</span></div><div class="card"><b id="seasonTossWon">0</b><span>Toss Won</span></div></section><section class="feature"><div><div class="label">Win percentage</div><div class="win" id="seasonWinPercentage">0.0%</div><p class="desc" id="seasonWinDescription">No completed Season 8 matches yet.</p></div><div><div class="label">Match decisions</div><p class="desc"><b id="seasonBatFirst">0</b> bat first<br><b id="seasonFieldFirst">0</b> field first<br><b id="seasonUpcoming">0</b> upcoming matches</p></div></section><div class="head"><h2>Scheduled Match Results</h2><span id="scheduledCount">0 matches</span></div><p class="desc">Every fixture from the uploaded schedule appears below. Admin can add or edit results; guests can view them.</p><div class="results-toolbar"><span id="editResultsStatus">Sign in as admin to add or edit match results.</span><div class="results-actions"><a class="edit-results" id="editResultsBtn" href="admin.html?returnTo=team-stats.html%23scheduledMatches">EDIT / ADD RESULTS</a><button class="edit-results" id="downloadTeamPdf" type="button">DOWNLOAD TEAM-WISE PDF</button></div></div><div class="team-filter-row"><label for="teamFilter">Show schedule/results for</label><select id="teamFilter" aria-label="Filter matches by opponent team"></select></div><section class="match-list" id="scheduledMatches"></section></main><script>(()=>{const SUPABASE_URL='https://vttyyoenrzuhbloocfgr.supabase.co',SUPABASE_PUBLISHABLE_KEY='sb_publishable__i92X7tfRMOfpjcVUmqhkg_wQ1pwdgp',ADMIN_EMAIL='ammarsajid666@gmail.com',supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),state={matches:[],results:{}};let currentUser=null,isAdmin=false,selectedTeam="all";const $=id=>document.getElementById(id),key=m=>m.date+'|'+String(m.opponent||'').trim().toLowerCase(),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  function setAuthStatus(message, type=''){
+    const el = $('authStatus');
+    el.textContent = message;
+    el.className = 'auth-status' + (type ? ' '+type : '');
+  }
+  function setGateStatus(message, type=''){
+    const el = $('gateStatus');
+    if(!el) return;
+    el.textContent = message;
+    el.className = 'gate-status' + (type ? ' '+type : '');
+  }
+  const ACCESS_KEY = 'ecpAccessMode';
+  function isGuestMode(){ return localStorage.getItem(ACCESS_KEY) === 'guest'; }
+  function evaluateAccess(){
+    document.body.classList.toggle('gate-unlocked', !!currentUser || isGuestMode());
+  }
+  function updateAuthUI(){
+    document.body.classList.toggle('admin', isAdmin);
+    const guest = !currentUser && isGuestMode();
+    $('authGuestRow').hidden = !guest;
+    $('authSignedIn').hidden = !currentUser;
+    if(currentUser){
+      $('authUserLabel').textContent = isAdmin ? `Signed in as ${currentUser.email} · Admin editing enabled` : `Signed in as ${currentUser.email} · Read-only`;
+      setAuthStatus(isAdmin ? 'You can now edit and save club data.' : 'This account is not the configured admin account.', isAdmin ? 'ok' : 'err');
+    }else{
+      setAuthStatus('');
+    }
+    evaluateAccess();
+  }
+  document.querySelectorAll('.gate-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.gate-tab').forEach(t=>t.classList.toggle('active', t===tab));
+      document.querySelectorAll('.gate-pane').forEach(p=>{ p.hidden = p.dataset.gatePane !== tab.dataset.gateTab; });
+      setGateStatus('');
+    });
+  });
+  $('gateGuestBtn').addEventListener('click', ()=>{
+    localStorage.setItem(ACCESS_KEY, 'guest');
+    updateAuthUI();
+  });
+  $('authGuestSwitchBtn').addEventListener('click', ()=>{
+    localStorage.removeItem(ACCESS_KEY);
+    updateAuthUI();
+  });
+  $('gateLoginBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    const password = $('gatePassword').value;
+    if(!email || !password){ setGateStatus('Enter your email and password.', 'err'); return; }
+    setGateStatus('Signing in…');
+    const {error} = await supabase.auth.signInWithPassword({email, password});
+    if(error) setGateStatus(error.message, 'err');
+  });
+  $('gateMagicBtn').addEventListener('click', async ()=>{
+    const email = $('gateEmail').value.trim().toLowerCase();
+    if(!email){ setGateStatus('Enter your email first.', 'err'); return; }
+    setGateStatus('Sending login link…');
+    const {error} = await supabase.auth.signInWithOtp({email, options:{emailRedirectTo:window.location.href}});
+    if(error) setGateStatus(error.message, 'err');
+    else setGateStatus('Login link sent. Check your email and open the link on this device.', 'ok');
+  });
+  $('gateSignupBtn').addEventListener('click', async ()=>{
+    const email = $('gateSignupEmail').value.trim().toLowerCase();
+    const password = $('gateSignupPassword').value;
+    if(email !== ADMIN_EMAIL){ setGateStatus('Only the configured admin email can create the admin account.', 'err'); return; }
+    if(password.length < 6){ setGateStatus('Choose a password with at least 6 characters.', 'err'); return; }
+    setGateStatus('Creating your admin account…');
+    const {data, error} = await supabase.auth.signUp({email, password});
+    if(error) setGateStatus(error.message, 'err');
+    else if(data.session) setGateStatus('Admin account created and signed in.', 'ok');
+    else setGateStatus('Account created. Check your email if confirmation is required, then log in.', 'ok');
+  });
+  $('authLogoutBtn').addEventListener('click', async ()=>{ localStorage.removeItem(ACCESS_KEY); await supabase.auth.signOut(); });
+  evaluateAccess();
+  async function get(name){const {data,error}=await supabase.from('club_data').select('value').eq('key',name).maybeSingle();if(error)throw error;return data?data.value:null}async function save(){if(!isAdmin){location.href='admin.html?returnTo=team-stats.html';return false}const {error}=await supabase.from('club_data').upsert({key:'matchResults',value:JSON.stringify(state.results),updated_at:new Date().toISOString()},{onConflict:'key'});if(error){alert('Could not save result: '+error.message);return false}return true}function updateEditAccess(){const button=document.getElementById("editResultsBtn"),status=document.getElementById("editResultsStatus");if(isAdmin){button.textContent="EDITING ENABLED";button.href="#scheduledMatches";button.classList.add("enabled");status.textContent="Choose a result and add the details below, then save the match."}else{button.textContent="EDIT / ADD RESULTS";button.href="admin.html?returnTo=team-stats.html%23scheduledMatches";button.classList.remove("enabled");status.textContent="Sign in as admin to add or edit match results."}}function updateSeason8(){const completedStatuses=["Won","Lost","Tie","No result"],today=new Date();today.setHours(0,0,0,0);const entries=state.matches.map(match=>({match,saved:state.results[key(match)]||{}})),completed=entries.filter(({saved})=>completedStatuses.includes(saved.status)),count=status=>completed.filter(({saved})=>saved.status===status).length,won=count("Won"),lost=count("Lost"),tie=count("Tie"),noResult=count("No result"),tossWon=entries.filter(({saved})=>saved.toss==="Won").length,batFirst=entries.filter(({saved})=>saved.decision==="Bat first").length,fieldFirst=entries.filter(({saved})=>saved.decision==="Field first").length,upcoming=entries.filter(({match,saved})=>!completedStatuses.includes(saved.status)&&new Date(match.date+"T00:00:00")>=today).length,decided=won+lost,winPercentage=decided?won/decided*100:0;document.getElementById("seasonMatches").textContent=completed.length;document.getElementById("seasonWon").textContent=won;document.getElementById("seasonLost").textContent=lost;document.getElementById("seasonTie").textContent=tie;document.getElementById("seasonNoResult").textContent=noResult;document.getElementById("seasonTossWon").textContent=tossWon;document.getElementById("seasonWinPercentage").textContent=winPercentage.toFixed(1)+"%";document.getElementById("seasonWinDescription").textContent=completed.length?won+" "+(won===1?"win":"wins")+" from "+completed.length+" recorded "+(completed.length===1?"match":"matches")+".":"No completed Season 8 matches yet.";document.getElementById("seasonBatFirst").textContent=batFirst;document.getElementById("seasonFieldFirst").textContent=fieldFirst;document.getElementById("seasonUpcoming").textContent=upcoming}function updateTeamFilter(){const select=document.getElementById("teamFilter"),names=[...new Set(state.matches.map(match=>String(match.opponent||"Opponent TBD").trim()))].sort((a,b)=>a.localeCompare(b));select.innerHTML="";const allOption=document.createElement("option");allOption.value="all";allOption.textContent="All teams - chronological";select.appendChild(allOption);names.forEach(name=>{const option=document.createElement("option");option.value=name.toLowerCase();option.textContent=name;select.appendChild(option)});if(selectedTeam!=="all"&&!names.some(name=>name.toLowerCase()===selectedTeam))selectedTeam="all";select.value=selectedTeam}function render(){updateEditAccess();updateSeason8();updateTeamFilter();const box=document.getElementById("scheduledMatches"),allMatches=[...state.matches].sort((a,b)=>String(a.date).localeCompare(String(b.date))),visibleMatches=selectedTeam==="all"?allMatches:allMatches.filter(match=>String(match.opponent||"Opponent TBD").trim().toLowerCase()===selectedTeam);document.getElementById("scheduledCount").textContent=visibleMatches.length+" "+(visibleMatches.length===1?"match":"matches")+(selectedTeam==="all"?"":" shown");if(!visibleMatches.length){box.innerHTML="<div class=empty>No scheduled matches found for this team.</div>";return}box.innerHTML="";visibleMatches.forEach(match=>{const id=key(match),saved=state.results[id]||{},date=new Date(match.date+"T00:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}),row=document.createElement("article"),title=document.createElement("div"),dateLine=document.createElement("div");row.className="match-row";title.className="match-title";title.textContent="vs "+String(match.opponent||"Opponent TBD");dateLine.className="match-date";dateLine.textContent=date+(match.venue?" · "+match.venue:match.location?" · "+match.location:"");row.append(title,dateLine);if(isAdmin){const controls=document.createElement("div"),select=document.createElement("select"),input=document.createElement("input"),button=document.createElement("button");controls.className="match-controls";select.setAttribute("aria-label","Match result");["Pending","Won","Lost","Tie","No result"].forEach(value=>{const option=document.createElement("option");option.value=value;option.textContent=value==="Pending"?"Result pending":value;select.appendChild(option)});select.value=saved.status||"Pending";input.placeholder="Result, e.g. Won by 5 wickets";input.value=saved.detail||"";button.textContent="Save result";button.addEventListener("click",async()=>{state.results[id]={...saved,status:select.value,detail:input.value.trim()};if(await save())render()});controls.append(select,input,button);row.appendChild(controls)}else{const view=document.createElement("div");view.className="match-view";if(saved.status){const result=document.createElement("span");result.className="result-"+String(saved.status).toLowerCase().replace(/\s+/g,"-");result.textContent=saved.status;view.appendChild(result);if(saved.detail)view.appendChild(document.createTextNode(" · "+saved.detail))}else view.textContent="Result pending";row.appendChild(view)}box.appendChild(row)})}function pdfSafe(value){return String(value==null?"":value).replace(/[^\x20-\x7E]/g,"-").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)")}function generateTeamResultsPdf(){const today=new Date().toISOString().slice(0,10),groups=new Map();state.matches.forEach(match=>{const opponent=String(match.opponent||"Opponent TBD").trim(),groupKey=opponent.toLowerCase();if(!groups.has(groupKey))groups.set(groupKey,{opponent,matches:[]});groups.get(groupKey).matches.push(match)});const ordered=[...groups.values()].sort((a,b)=>a.opponent.localeCompare(b.opponent)),pages=ordered.length?ordered.map(group=>{const entries=group.matches.map(match=>state.results[key(match)]||{}),completed=entries.filter(item=>["Won","Lost","Tie","No result"].includes(item.status)),won=entries.filter(item=>item.status==="Won").length,lost=entries.filter(item=>item.status==="Lost").length,tie=entries.filter(item=>item.status==="Tie").length,lines=["ECP SPARTANS - SEASON 8","TEAM-WISE SCHEDULE & RESULTS","","OPPONENT: "+group.opponent,group.matches.length+" scheduled | "+completed.length+" completed | "+won+" won | "+lost+" lost | "+tie+" tied",""];[...group.matches].sort((a,b)=>a.date.localeCompare(b.date)).forEach((match,index)=>{const saved=state.results[key(match)]||{},date=match.date?new Date(match.date+"T00:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"Date TBC",venue=match.venue||match.location||"Venue TBC",status=saved.status||"Pending",detail=saved.detail||"No result details";lines.push((index+1)+". "+date+" | "+venue);lines.push("   Result: "+status+" - "+detail);lines.push("")});lines.push("Generated "+today);return lines}):[["ECP SPARTANS - SEASON 8","TEAM-WISE SCHEDULE & RESULTS","","No scheduled matches available.","","Generated "+today]],pageCount=pages.length,fontId=3+pageCount*2,objects=[];objects[1]="<< /Type /Catalog /Pages 2 0 R >>";const kids=[];pages.forEach((lines,pageIndex)=>{const pageId=3+pageIndex*2,contentId=pageId+1;kids.push(pageId+" 0 R");let content="BT\n/F1 10 Tf\n40 800 Td\n";lines.slice(0,49).forEach((line,index)=>{if(index===0)content+="/F1 16 Tf\n";else if(index===1)content+="/F1 12 Tf\n";else if(index===3)content+="/F1 13 Tf\n";else if(index===4)content+="/F1 9 Tf\n";else if(index===6)content+="/F1 10 Tf\n";content+="("+pdfSafe(line.slice(0,105))+") Tj\n0 -15 Td\n"});content+="ET";objects[pageId]="<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontId+" 0 R >> >> /Contents "+contentId+" 0 R >>";objects[contentId]="<< /Length "+new TextEncoder().encode(content).length+" >>\nstream\n"+content+"\nendstream"});objects[2]="<< /Type /Pages /Kids ["+kids.join(" ")+"] /Count "+pageCount+" >>";objects[fontId]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";let pdf="%PDF-1.4\n%1234\n";const offsets=[0],encoder=new TextEncoder();for(let id=1;id<=fontId;id++){offsets[id]=encoder.encode(pdf).length;pdf+=id+" 0 obj\n"+objects[id]+"\nendobj\n"}const xrefOffset=encoder.encode(pdf).length;pdf+="xref\n0 "+(fontId+1)+"\n0000000000 65535 f \n";for(let id=1;id<=fontId;id++)pdf+=String(offsets[id]).padStart(10,"0")+" 00000 n \n";pdf+="trailer\n<< /Size "+(fontId+1)+" /Root 1 0 R >>\nstartxref\n"+xrefOffset+"\n%%EOF";const blob=new Blob([pdf],{type:"application/pdf"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="ECP-Spartans-team-wise-results-"+today+".pdf";document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}async function load(){try{const [matches,results]=await Promise.all([get('matches'),get('matchResults')]);state.matches=matches?(typeof matches==='string'?JSON.parse(matches):matches):[];state.results=results?(typeof results==='string'?JSON.parse(results):results):{}}catch(e){state.matches=[];state.results={}}render()}document.getElementById("teamFilter").addEventListener("change",event=>{selectedTeam=event.target.value;render()});document.getElementById("downloadTeamPdf").addEventListener("click",generateTeamResultsPdf);supabase.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;isAdmin=!!currentUser&&(currentUser.email||'').toLowerCase()===ADMIN_EMAIL;if(currentUser)localStorage.removeItem(ACCESS_KEY);updateAuthUI();render()});supabase.auth.getSession().then(({data})=>{currentUser=data.session?.user||null;isAdmin=!!currentUser&&(currentUser.email||'').toLowerCase()===ADMIN_EMAIL;if(currentUser)localStorage.removeItem(ACCESS_KEY);updateAuthUI();load()})})()</script></body></html>
