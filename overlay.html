@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECPHeros Live Overlay</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+  html,body{margin:0;height:100%;background:transparent;font-family:"Barlow Condensed","Arial Narrow",sans-serif;color:#F1F4F9}
+  body.green{background:#00B140}
+  .wrap{position:fixed;left:0;right:0;bottom:0;padding:16px;display:flex;justify-content:center}
+  body.top .wrap{top:0;bottom:auto}
+  .bar{display:flex;align-items:stretch;flex-wrap:wrap;background:linear-gradient(180deg,#111A2B,#070B13);border-radius:6px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.45);border:1px solid #243049;max-width:100%}
+  .bar>div{padding:8px 14px;display:flex;align-items:center;gap:8px;border-right:1px solid #1C2637;white-space:nowrap}
+  .bar>div:last-child{border-right:0}
+  .tm{color:#fff;font-weight:700;font-size:20px;letter-spacing:3px;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+  .scr{font-size:30px;font-weight:700;letter-spacing:.5px;font-variant-numeric:tabular-nums}
+  .scr small{font-size:16px;color:#8B95A8;margin-left:6px;font-weight:500}
+  .p{font-size:16px;font-weight:500;letter-spacing:.4px;font-variant-numeric:tabular-nums}
+  .p b{font-weight:700}
+  .p em{font-style:normal;color:#E9B949}
+  .dim{color:#8B95A8}
+  .ball{min-width:22px;height:22px;padding:0 5px;border-radius:11px;display:inline-grid;place-items:center;font-weight:700;font-size:12px;background:#1C2637;border:1px solid #2A3650}
+  .b4{background:#0F2A20;border-color:#3FBF84;color:#3FBF84}
+  .b6{background:#E9B949;border-color:#E9B949;color:#120E04}
+  .wk{background:#F0555B;border-color:#F0555B;color:#fff}
+  .ex{border-color:#E9B949;color:#E9B949}
+  @media (max-width:560px){.bar>div{padding:6px 10px}.scr{font-size:24px}.tm{font-size:16px}.p{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="bar" id="bar"><div class="p">Connecting to live score…</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+  const SUPABASE_URL = 'https://alkndajjmnqecgzvvzgd.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_wbQLvSfKI6YnDGmi3VRBMQ_vigCxEr2';
+  const q = new URLSearchParams(location.search);
+  const id = (q.get('m') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (q.get('g') === '1') document.body.classList.add('green');
+  if (q.get('pos') === 'top') document.body.classList.add('top');
+  const bar = document.getElementById('bar');
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cls = l => l === 'W' ? 'wk' : l === '4' ? 'b4' : l === '6' ? 'b6' : /wd|nb|b$|lb/.test(l) ? 'ex' : '';
+  let last = 0;
+
+  function draw(s, at) {
+    if (!s || !s.tn) { bar.innerHTML = '<div class="p">Waiting for the scorer…</div>'; return; }
+    last = at || last;
+    let h = `<div class="tm" style="background:${esc(s.tc || '#E9B949')}">${esc(s.ts || s.tn)}</div>`;
+    h += `<div class="scr">${s.runs}-${s.wk}<small>${esc(s.ov)}${s.tov ? ' / ' + s.tov : ''}</small></div>`;
+    (s.bat || []).forEach(b => { h += `<div class="p">${b.st ? '<em>▸</em> ' : ''}${esc(b.n)} <b>${b.r}</b> <span class="dim">(${b.b})</span></div>`; });
+    if (s.bw) h += `<div class="p">${esc(s.bw.n)} <b>${s.bw.w}-${s.bw.r}</b> <span class="dim">(${esc(s.bw.o)})</span></div>`;
+    if (s.balls && s.balls.length) h += `<div class="p" style="gap:4px">${s.balls.map(l => `<span class="ball ${cls(l)}">${esc(l)}</span>`).join('')}</div>`;
+    if (s.tail) h += `<div class="p"><em>${esc(s.tail)}</em></div>`;
+    bar.innerHTML = h;
+  }
+
+  async function load(client) {
+    const { data, error } = await client.from('eh_live').select('state,updated_at').eq('match_id', id).maybeSingle();
+    if (error) { bar.innerHTML = '<div class="p">Live score unavailable — retrying…</div>'; return; }
+    if (!data) { bar.innerHTML = '<div class="p">Waiting for the scorer to start this match…</div>'; return; }
+    draw(data.state, Date.parse(data.updated_at));
+  }
+
+  if (!id) {
+    bar.innerHTML = '<div class="p">Add ?m=MATCH_ID to this link (copy it from ECPHeros).</div>';
+  } else if (!window.supabase) {
+    bar.innerHTML = '<div class="p">Could not load the live score library.</div>';
+  } else {
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+    load(client);
+    client.channel('eh-' + id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'eh_live', filter: 'match_id=eq.' + id },
+        p => { if (p.new && p.new.state) draw(p.new.state, Date.parse(p.new.updated_at)); })
+      .subscribe();
+    setInterval(() => load(client), 15000);
+  }
+</script>
+</body>
+</html>
