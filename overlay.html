@@ -8,9 +8,10 @@
 <style>
   html,body{margin:0;height:100%;background:transparent;font-family:"Barlow Condensed","Arial Narrow",sans-serif;color:#F1F4F9}
   body.green{background:#00B140}
-  .wrap{position:fixed;left:0;right:0;bottom:0;padding:16px;display:flex;justify-content:center}
+  .wrap{position:fixed;left:0;right:0;bottom:0;padding:2vh 2vw;display:flex;justify-content:center;overflow:hidden}
   body.top .wrap{top:0;bottom:auto}
-  .bar{display:flex;align-items:stretch;flex-wrap:wrap;background:linear-gradient(180deg,#111A2B,#070B13);border-radius:6px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.45);border:1px solid #243049;max-width:100%}
+  body.top .bar{transform-origin:top center}
+  .bar{display:flex;align-items:stretch;flex-wrap:nowrap;transform-origin:bottom center;flex:none;background:linear-gradient(180deg,#111A2B,#070B13);border-radius:6px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.45);border:1px solid #243049;max-width:100%}
   .bar>div{padding:8px 14px;display:flex;align-items:center;gap:8px;border-right:1px solid #1C2637;white-space:nowrap}
   .bar>div:last-child{border-right:0}
   .tm{color:#fff;font-weight:700;font-size:20px;letter-spacing:3px;text-transform:uppercase;text-shadow:0 1px 2px rgba(0,0,0,.35)}
@@ -25,7 +26,6 @@
   .b6{background:#E9B949;border-color:#E9B949;color:#120E04}
   .wk{background:#F0555B;border-color:#F0555B;color:#fff}
   .ex{border-color:#E9B949;color:#E9B949}
-  @media (max-width:560px){.bar>div{padding:6px 10px}.scr{font-size:24px}.tm{font-size:16px}.p{font-size:14px}}
 </style>
 </head>
 <body>
@@ -53,7 +53,23 @@
     if (s.balls && s.balls.length) h += `<div class="p" style="gap:4px">${s.balls.map(l => `<span class="ball ${cls(l)}">${esc(l)}</span>`).join('')}</div>`;
     if (s.tail) h += `<div class="p"><em>${esc(s.tail)}</em></div>`;
     bar.innerHTML = h;
+    fit();
   }
+
+  // Keep the bar on one line and scale it to fill the screen width (portrait or landscape).
+  const maxScale = parseFloat(q.get('scale') || '') || 0;
+  function fit() {
+    bar.style.transform = 'none';
+    const avail = window.innerWidth * 0.96;
+    const w = bar.scrollWidth || 1;
+    let k = avail / w;
+    const cap = maxScale || (window.innerWidth > window.innerHeight ? 1.6 : 1);
+    k = Math.min(k, cap);
+    bar.style.transform = 'scale(' + k.toFixed(3) + ')';
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', () => setTimeout(fit, 250));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
 
   async function load(client) {
     const { data, error } = await client.from('eh_live').select('state,updated_at').eq('match_id', id).maybeSingle();
